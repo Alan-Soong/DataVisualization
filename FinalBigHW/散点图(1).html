@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3 Scatter Plot - GDP vs Year-on-Year Change</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .axis-label {
+      font-size: 14px;
+    }
+    .title0 {
+      font-size: 40px;
+    }
+    .scatter-circle {
+      fill: steelblue;
+      stroke: white;
+      stroke-width: 1.5px;
+    }
+
+    .scatter-text {
+      font-size: 12px;
+      text-anchor: middle;
+      fill: black;
+    }
+  </style>
+</head>
+<body>
+  <svg width="1600" height="1000"></svg>
+ 
+  <script>
+    // 模拟数据
+    const data = [
+      { province: '广东', gdp: 135673.16, yoy: 5763.44 },
+      { province: '江苏', gdp: 128222.20, yoy: 4907.00 },
+      { province: '山东', gdp: 92068.70, yoy: 4345.50 },
+      { province: '浙江', gdp: 82553.00, yoy: 3662.00 },
+      { province: '四川', gdp: 60132.90, yoy: 3597.40 },
+      { province: '湖北', gdp: 55803.63, yoy: 3478.86 },
+      { province: '安徽', gdp: 47050.60, yoy: 2925.60 },
+      { province: '河南', gdp: 59132.39, yoy: 2887.00 },
+      { province: '湖南', gdp: 50012.90, yoy: 2575.50 },
+      { province: '台湾', gdp: 53273.90, yoy: 2310.71 },
+      { province: '重庆', gdp: 30145.79, yoy: 2310.66 },
+      { province: '福建', gdp: 54355.10, yoy: 2090.00 },
+      { province: '云南', gdp: 30021.12, yoy: 1807.72 },
+      { province: '江西', gdp: 32200.10, yoy: 1538.80 },
+      { province: '上海', gdp: 47218.66, yoy: 1505.26 },
+      { province: '北京', gdp: 43760.70, yoy: 1314.60 },
+      { province: '河北', gdp: 43944.10, yoy: 1304.50 },
+      { province: '广西', gdp: 27202.39, yoy: 1365.96 },
+      { province: '陕西', gdp: 33786.07, yoy: 1248.99 },
+      { province: '天津', gdp: 16737.30, yoy: 1015.25 },
+      { province: '香港', gdp: 27024.09, yoy: 986.04 },
+      { province: '辽宁', gdp: 30209.40, yoy: 901.50 },
+      { province: '山西', gdp: 25698.18, yoy: 847.20 },
+      { province: '内蒙古', gdp: 24627.00, yoy: 666.40 },
+      { province: '黑龙江', gdp: 15883.90, yoy: 583.30 },
+      { province: '吉林', gdp: 13531.19, yoy: 562.20 },
+      { province: '贵州', gdp: 20913.25, yoy: 562.09 },
+      { province: '新疆', gdp: 19125.91, yoy: 508.83 },
+      { province: '甘肃', gdp: 11863.80, yoy: 498.60 },
+      { province: '海南', gdp: 7551.18, yoy: 350.95 },
+      { province: '宁夏', gdp: 5314.95, yoy: 183.52 },
+      { province: '西藏', gdp: 2392.67, yoy: 90.27 },
+      { province: '青海', gdp: 3799.06, yoy: 78.80 }
+    ];
+
+    // 设置图表的宽度和高度
+    const margin = { top: 60, right: 80, bottom: 60, left: 80 };
+    const width = 1600 - margin.left - margin.right;
+    const height = 1000 - margin.top - margin.bottom;
+
+    // 创建SVG容器
+    const svg = d3.select("svg")
+                  .attr("width", width + margin.left + margin.right)
+                  .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                  .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    // 创建x轴和y轴的比例尺
+    const xScale = d3.scaleLinear()
+                     .domain([0, 140000.00])
+                     .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+                     .domain([0, 6000.00])
+                     .range([height, 0]);
+
+    // 创建x轴和y轴
+    const xAxis = d3.axisBottom(xScale).ticks(5);
+    const yAxis = d3.axisLeft(yScale).ticks(5);
+
+svg.append("g")
+   .attr("class", "x-axis")
+   .attr("transform", `translate(0, ${height})`)
+   .call(xAxis);
+    svg.append("text")
+   .attr("class", "title0")
+   .attr("x", width / 2)
+   .attr("y", 20)
+   .style("text-anchor", "middle")
+   .text("中国省份GDP与餐饮收入情况");
+// 添加 x 轴标签
+svg.append("text")
+   .attr("class", "axis-label")
+   .attr("x", width / 2)
+   .attr("y", 900)
+   .style("text-anchor", "middle")
+   .text("GDP收入 (亿元)");
+
+// 添加 y 轴
+svg.append("g")
+   .attr("class", "y-axis")
+   .call(yAxis);
+
+// 添加 y 轴标签
+svg.append("text")
+   .attr("class", "axis-label")
+   .attr("x", -380)
+   .attr("y", -20)
+   .style("text-anchor", "middle")
+   .attr("transform", "rotate(-90)")
+   .text("餐饮营收 (亿元)");
+
+
+    // 绘制散点图
+    svg.selectAll(".scatter-circle")
+       .data(data)
+       .enter()
+       .append("circle")
+       .attr("class", "scatter-circle")
+       .attr("cx", d => xScale(d.gdp))
+       .attr("cy", d => yScale(d.yoy))
+       .attr("r", 4);
+
+    // 添加省份标签
+    svg.selectAll(".scatter-text")
+       .data(data)
+       .enter()
+       .append("text")
+       .attr("class", "scatter-text")
+       .attr("x", d => xScale(d.gdp))
+       .attr("y", d => yScale(d.yoy) - 12)
+       .text(d => d.province);
+  </script>
+</body>
+</html>

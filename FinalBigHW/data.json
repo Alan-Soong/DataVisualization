@@ -1,0 +1,257 @@
+[
+    {
+        "category": "和府捞面",
+        "frequency": 8,
+        "average_budget": 54.0
+    },
+    {
+        "category": "重庆小面",
+        "frequency": 1,
+        "average_budget": 30.0
+    },
+    {
+        "category": "八爷炸酱面",
+        "frequency": 1,
+        "average_budget": 31.0
+    },
+    {
+        "category": "萨莉亚",
+        "frequency": 1,
+        "average_budget": 50.0
+    },
+    {
+        "category": "柳州螺狮粉",
+        "frequency": 1,
+        "average_budget": 25.0
+    },
+    {
+        "category": "板面",
+        "frequency": 1,
+        "average_budget": 13.0
+    },
+    {
+        "category": "武汉热干面",
+        "frequency": 1,
+        "average_budget": 12.0
+    },
+    {
+        "category": "流景面馆",
+        "frequency": 1,
+        "average_budget": 23.0
+    },
+    {
+        "category": "西贝莜面村",
+        "frequency": 4,
+        "average_budget": 94.5
+    },
+    {
+        "category": "松鹤楼",
+        "frequency": 1,
+        "average_budget": 60.0
+    },
+    {
+        "category": "芸锦拉面",
+        "frequency": 2,
+        "average_budget": 46.5
+    },
+    {
+        "category": "同发号",
+        "frequency": 9,
+        "average_budget": 104.1
+    },
+    {
+        "category": "费大厨辣椒炒肉",
+        "frequency": 8,
+        "average_budget": 84.5
+    },
+    {
+        "category": "外婆家",
+        "frequency": 9,
+        "average_budget": 81.67
+    },
+    {
+        "category": "小作坊",
+        "frequency": 2,
+        "average_budget": 85.0
+    },
+    {
+        "category": "川味居",
+        "frequency": 3,
+        "average_budget": 56.67
+    },
+    {
+        "category": "青年公社",
+        "frequency": 9,
+        "average_budget": 109.67
+    },
+    {
+        "category": "清雅",
+        "frequency": 1,
+        "average_budget": 50.0
+    },
+    {
+        "category": "川人百味",
+        "frequency": 1,
+        "average_budget": 100.0
+    },
+    {
+        "category": "宝轩渔府",
+        "frequency": 1,
+        "average_budget": 100.0
+    },
+    {
+        "category": "桥头堡",
+        "frequency": 1,
+        "average_budget": 60.0
+    },
+    {
+        "category": "东北妈妈菜馆",
+        "frequency": 1,
+        "average_budget": 107.0
+    },
+    {
+        "category": "干饭湘",
+        "frequency": 1,
+        "average_budget": 70.0
+    },
+    {
+        "category": "齐齐哈尔",
+        "frequency": 10,
+        "average_budget": 123.1
+    },
+    {
+        "category": "东北虎",
+        "frequency": 17,
+        "average_budget": 114.0
+    },
+    {
+        "category": "致青春",
+        "frequency": 1,
+        "average_budget": 81.0
+    },
+    {
+        "category": "金喜娜",
+        "frequency": 1,
+        "average_budget": 151.0
+    },
+    {
+        "category": "海底捞",
+        "frequency": 43,
+        "average_budget": 126.7
+    },
+    {
+        "category": "呷哺呷哺",
+        "frequency": 15,
+        "average_budget": 131.7
+    },
+    {
+        "category": "旬羊",
+        "frequency": 1,
+        "average_budget": 80.0
+    },
+    {
+        "category": "芳竹园",
+        "frequency": 15,
+        "average_budget": 104.2
+    },
+    {
+        "category": "赵鲜记",
+        "frequency": 3,
+        "average_budget": 163.3
+    },
+    {
+        "category": "五里关",
+        "frequency": 1,
+        "average_budget": 100.0
+    },
+    {
+        "category": "熊喵来了",
+        "frequency": 4,
+        "average_budget": 98.75
+    },
+    {
+        "category": "袁记串串香",
+        "frequency": 1,
+        "average_budget": 195.0
+    },
+    {
+        "category": "Osteria",
+        "frequency": 2,
+        "average_budget": 325.0
+    },
+    {
+        "category": "萨莉亚",
+        "frequency": 16,
+        "average_budget": 87.5
+    },
+    {
+        "category": "比格",
+        "frequency": 7,
+        "average_budget": 99.1
+    },
+    {
+        "category": "娜娜家",
+        "frequency": 2,
+        "average_budget": 140.0
+    },
+    {
+        "category": "必胜客",
+        "frequency": 3,
+        "average_budget": 127.3
+    },
+    {
+        "category": "杨国福",
+        "frequency": 13,
+        "average_budget": 36.1
+    },
+    {
+        "category": "张亮麻辣烫",
+        "frequency": 8,
+        "average_budget": 50.6
+    },
+    {
+        "category": "正新鸡排",
+        "frequency": 11,
+        "average_budget": 26.5
+    },
+    {
+        "category": "塔斯汀",
+        "frequency": 2,
+        "average_budget": 30.0
+    },
+    {
+        "category": "滨寿司",
+        "frequency": 4,
+        "average_budget": 26.3
+    },
+    {
+        "category": "麦当劳",
+        "frequency": 5,
+        "average_budget": 59.0
+    },
+    {
+        "category": "肉夹馍",
+        "frequency": 1,
+        "average_budget": 30.0
+    },
+    {
+        "category": "醉面",
+        "frequency": 1,
+        "average_budget": 40.0
+    },
+    {
+        "category": "吉祥馄饨",
+        "frequency": 2,
+        "average_budget": 32.0
+    },
+    {
+        "category": "肯德基",
+        "frequency": 2,
+        "average_budget": 49.0
+    },
+    {
+        "category": "米村拌饭",
+        "frequency": 1,
+        "average_budget": 24.0
+    }
+]

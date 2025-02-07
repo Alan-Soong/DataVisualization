@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NKUers外出吃饭的选择</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Neon', cursive;
+            text-align: center;
+            font-weight: 1000;
+            background-image: url('slight.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0;
+            min-height: 98vh;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        text {
+            font-size: 20px;
+            fill: #333;
+        }
+
+        .label {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .divider {
+            stroke: black;
+            stroke-width: 1.5;
+        }
+
+        #switchBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #switchBtn:hover {
+            background-color: #45a049;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 25px;
+            font-size: 20px;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        /* 响应式设计 */
+        @media screen and (max-width: 768px) {
+            #chart svg {
+                width: 100%;
+                height: auto;
+            }
+
+            .label1,
+            .label2 {
+                font-size: 10px;
+            }
+
+            .tooltip {
+                font-size: 10px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            .label1,
+            .label2 {
+                font-size: 8px;
+            }
+
+            .tooltip {
+                font-size: 8px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <h2>NKUers外出吃饭的选择</h2>
+    <h5>数据来源于问卷调查(悬浮可查看相关信息)</h5>
+    <div id="chart"></div>
+    <!-- tooltip 容器 -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        // 数据集
+        const data = [
+  {
+    "品牌": "老乡鸡",
+    "了解程度": 19,
+    "领跑指数": 97.2
+  },
+  {
+    "品牌": "杨国福",
+    "了解程度": 51,
+    "领跑指数": 97.1
+  },
+  {
+    "品牌": "张亮麻辣烫",
+    "了解程度": 53,
+    "领跑指数": 97.1
+  },
+  {
+    "品牌": "正新鸡排",
+    "了解程度": 58,
+    "领跑指数": 97
+  },
+  {
+    "品牌": "五芳斋",
+    "了解程度": 6,
+    "领跑指数": 94.3
+  },
+  {
+    "品牌": "味千拉面",
+    "了解程度": 19,
+    "领跑指数": 91.7
+  },
+  {
+    "品牌": "五谷鱼粉",
+    "了解程度": 27,
+    "领跑指数": 91.6
+  },
+  {
+    "品牌": "真功夫",
+    "了解程度": 10,
+    "领跑指数": 88.8
+  },
+  {
+    "品牌": "南城香",
+    "了解程度": 3,
+    "领跑指数": 88
+  },
+  {
+    "品牌": "吉祥馄饨",
+    "了解程度": 28,
+    "领跑指数": 86.5
+  },
+  {
+    "品牌": "李先生",
+    "了解程度": 26,
+    "领跑指数": 86.4
+  },
+  {
+    "品牌": "夸父炸串",
+    "了解程度": 32,
+    "领跑指数": 86.3
+  },
+  {
+    "品牌": "和府捞面",
+    "了解程度": 32,
+    "领跑指数": 86
+  },
+  {
+    "品牌": "五爷拌面",
+    "了解程度": 13,
+    "领跑指数": 85.7
+  },
+  {
+    "品牌": "巴比馒头",
+    "了解程度": 3,
+    "领跑指数": 85.2
+  },
+  {
+    "品牌": "和合谷",
+    "了解程度": 3,
+    "领跑指数": 85.1
+  },
+  {
+    "品牌": "曼玲粥店",
+    "了解程度": 41,
+    "领跑指数": 84.6
+  },
+  {
+    "品牌": "李连贵熏肉大饼",
+    "了解程度": 4,
+    "领跑指数": 84.5
+  },
+  {
+    "品牌": "犟骨头",
+    "了解程度": 26,
+    "领跑指数": 84
+  },
+  {
+    "品牌": "陈香贵兰州牛肉面",
+    "了解程度": 4,
+    "领跑指数": 83.7
+  },
+  {
+    "品牌": "知味观",
+    "了解程度": 6,
+    "领跑指数": 98.7
+  },
+  {
+    "品牌": "西贝莜面村",
+    "了解程度": 25,
+    "领跑指数": 98.5
+  },
+  {
+    "品牌": "广州酒家",
+    "了解程度": 4,
+    "领跑指数": 95.9
+  },
+  {
+    "品牌": "九毛九",
+    "了解程度": 4,
+    "领跑指数": 95.6
+  },
+  {
+    "品牌": "老牌坊鲁菜名店",
+    "了解程度": 1,
+    "领跑指数": 95.4
+  },
+  {
+    "品牌": "陶然居",
+    "了解程度": 5,
+    "领跑指数": 94.2
+  },
+  {
+    "品牌": "白金汉爵大酒店",
+    "了解程度": 1,
+    "领跑指数": 93.5
+  },
+  {
+    "品牌": "杏花楼",
+    "了解程度": 2,
+    "领跑指数": 93.3
+  },
+  {
+    "品牌": "东园小馆",
+    "了解程度": 4,
+    "领跑指数": 93.2
+  },
+  {
+    "品牌": "新荣记",
+    "了解程度": 5,
+    "领跑指数": 92.1
+  },
+  {
+    "品牌": "钟鼎楼食府",
+    "了解程度": 2,
+    "领跑指数": 92
+  },
+  {
+    "品牌": "马凯餐厅",
+    "了解程度": 1,
+    "领跑指数": 91.7
+  },
+  {
+    "品牌": "丰收日",
+    "了解程度": 0,
+    "领跑指数": 91.4
+  },
+  {
+    "品牌": "南京大牌档",
+    "了解程度": 18,
+    "领跑指数": 91.1
+  },
+  {
+    "品牌": "徐记海鲜",
+    "了解程度": 4,
+    "领跑指数": 90.5
+  },
+  {
+    "品牌": "同庆楼",
+    "了解程度": 1,
+    "领跑指数": 90.2
+  },
+  {
+    "品牌": "石浦大酒店",
+    "了解程度": 0,
+    "领跑指数": 89.6
+  },
+  {
+    "品牌": "岸香",
+    "了解程度": 1,
+    "领跑指数": 89.5
+  },
+  {
+    "品牌": "全聚德",
+    "了解程度": 38,
+    "领跑指数": 89.4
+  },
+  {
+    "品牌": "绿柳居",
+    "了解程度": 2,
+    "领跑指数": 88.5
+  },
+  {
+    "品牌": "荣誉大酒店",
+    "了解程度": 1,
+    "领跑指数": 87.8
+  },
+  {
+    "品牌": "豪客来牛排",
+    "了解程度": 13,
+    "领跑指数": 87.1
+  },
+  {
+    "品牌": "四季民福",
+    "了解程度": 10,
+    "领跑指数": 87
+  },
+  {
+    "品牌": "小厨娘",
+    "了解程度": 5,
+    "领跑指数": 86.9
+  },
+  {
+    "品牌": "唐宫海鲜坊",
+    "了解程度": 0,
+    "领跑指数": 86.6
+  },
+  {
+    "品牌": "外婆家",
+    "了解程度": 32,
+    "领跑指数": 86.4
+  },
+  {
+    "品牌": "有家酸菜鱼",
+    "了解程度": 6,
+    "领跑指数": 86.3
+  },
+  {
+    "品牌": "老阿爸浙江土菜馆",
+    "了解程度": 2,
+    "领跑指数": 86.2
+  },
+  {
+    "品牌": "豪享来",
+    "了解程度": 3,
+    "领跑指数": 86.1
+  },
+  {
+    "品牌": "旺顺阁鱼头泡饼",
+    "了解程度": 1,
+    "领跑指数": 86
+  },
+  {
+    "品牌": "西安饭庄",
+    "了解程度": 3,
+    "领跑指数": 85.9
+  },
+  {
+    "品牌": "云海肴",
+    "了解程度": 6,
+    "领跑指数": 85.9
+  },
+  {
+    "品牌": "隆聚·时令海鲜",
+    "了解程度": 1,
+    "领跑指数": 85.7
+  },
+  {
+    "品牌": "火宫殿",
+    "了解程度": 4,
+    "领跑指数": 85.5
+  },
+  {
+    "品牌": "费大厨辣椒炒肉",
+    "了解程度": 9,
+    "领跑指数": 85.3
+  },
+  {
+    "品牌": "宝轩渔府",
+    "了解程度": 5,
+    "领跑指数": 85.1
+  },
+  {
+    "品牌": "避风塘",
+    "了解程度": 11,
+    "领跑指数": 84.2
+  },
+  {
+    "品牌": "新白鹿",
+    "了解程度": 1,
+    "领跑指数": 83.9
+  },
+  {
+    "品牌": "半岛名轩",
+    "了解程度": 1,
+    "领跑指数": 83.8
+  },
+  {
+    "品牌": "青年公社",
+    "了解程度": 13,
+    "领跑指数": 83.3
+  },
+  {
+    "品牌": "沙河粉村",
+    "了解程度": 1,
+    "领跑指数": 83
+  },
+  {
+    "品牌": "湖锦酒楼",
+    "了解程度": 1,
+    "领跑指数": 82.6
+  },
+  {
+    "品牌": "百纳·观澜",
+    "了解程度": 2,
+    "领跑指数": 82.1
+  },
+  {
+    "品牌": "上海小南国",
+    "了解程度": 1,
+    "领跑指数": 81.6
+  },
+  {
+    "品牌": "艳阳天酒家",
+    "了解程度": 2,
+    "领跑指数": 80.5
+  },
+  {
+    "品牌": "跨湖楼",
+    "了解程度": 1,
+    "领跑指数": 80.3
+  },
+  {
+    "品牌": "百姓渔村",
+    "了解程度": 4,
+    "领跑指数": 79.8
+  },
+  {
+    "品牌": "梅龙镇酒家",
+    "了解程度": 0,
+    "领跑指数": 79.7
+  },
+  {
+    "品牌": "玉林烤鸭",
+    "了解程度": 2,
+    "领跑指数": 78.4
+  },
+  {
+    "品牌": "铭家",
+    "了解程度": 4,
+    "领跑指数": 78.6
+  },
+  {
+    "品牌": "海底捞",
+    "了解程度": 75,
+    "领跑指数": 99.4
+  },
+  {
+    "品牌": "呷哺呷哺",
+    "了解程度": 54,
+    "领跑指数": 96.7
+  },
+  {
+    "品牌": "朝天门",
+    "了解程度": 8,
+    "领跑指数": 96.5
+  },
+  {
+    "品牌": "刘一手重庆火锅",
+    "了解程度": 8,
+    "领跑指数": 96
+  },
+  {
+    "品牌": "德庄",
+    "了解程度": 11,
+    "领跑指数": 95.9
+  },
+  {
+    "品牌": "小龙坎",
+    "了解程度": 20,
+    "领跑指数": 93.4
+  },
+  {
+    "品牌": "巴奴毛肚火锅",
+    "了解程度": 21,
+    "领跑指数": 93
+  },
+  {
+    "品牌": "小尾羊",
+    "了解程度": 3,
+    "领跑指数": 92.8
+  },
+  {
+    "品牌": "左庭右院",
+    "了解程度": 9,
+    "领跑指数": 88.9
+  },
+  {
+    "品牌": "蜀大侠",
+    "了解程度": 11,
+    "领跑指数": 88.8
+  }
+];
+
+        // 颜色映射相关函数
+        const colorMapping = [
+            {
+                range: [
+                    "老乡鸡", "杨国福", "张亮麻辣烫", "正新鸡排", "五芳斋", "味千拉面",
+                    "五谷鱼粉", "真功夫", "南城香", "吉祥馄饨", "李先生", "夸父炸串", "和府捞面",
+                    "五爷拌面", "巴比馒头", "和合谷", "曼玲粥店", "李连贵熏肉大饼", "犟骨头", "陈香贵兰州牛肉面"
+                ],
+                color: "#FF6347" // 浅红色
+            },
+            {
+                range: [
+                    "知味观", "西贝莜面村", "广州酒家", "九毛九", "老牌坊鲁菜名店",
+                    "陶然居", "白金汉爵大酒店", "杏花楼", "东园小馆", "新荣记", "钟鼎楼食府",
+                    "马凯餐厅", "丰收日", "南京大牌档", "徐记海鲜", "同庆楼", "石浦大酒店", "岸香",
+                    "全聚德", "绿柳居", "荣誉大酒店", "豪客来牛排", "四季民福", "小厨娘", "唐宫海鲜坊",
+                    "外婆家", "有家酸菜鱼", "老阿爸浙江土菜馆", "豪享来", "旺顺阁鱼头泡饼", "西安饭庄",
+                    "云海肴", "隆聚·时令海鲜", "火宫殿", "费大厨辣椒炒肉", "宝轩渔府", "避风塘",
+                    "新白鹿", "半岛名轩", "青年公社", "沙河粉村", "湖锦酒楼", "百纳·观澜",
+                    "上海小南国", "艳阳天酒家", "跨湖楼", "百姓渔村", "梅龙镇酒家", "玉林烤鸭", "铭家"
+                ],
+                color: "#FF0000" // 中红色
+            },
+            {
+                range: [
+                    "海底捞", "呷哺呷哺", "朝天门", "刘一手重庆火锅", "德庄",
+                    "小龙坎", "巴奴毛肚火锅", "小尾羊", "左庭右院", "蜀大侠"
+                ],
+                color: "#FF3333" // 深红色
+            }
+        ];
+
+        // 根据品牌获取对应颜色
+        function getBarColor(category) {
+            for (const mapping of colorMapping) {
+                if (mapping.range.includes(category.trim())) {
+                    return mapping.color;
+                }
+            }
+            return "orange"; // 默认颜色
+        }
+
+        // 更新图表尺寸
+        function updateChartSize() {
+            const width = window.innerWidth / 1.2;
+            const height = Math.max(600, data.length * 15);
+            const margin = {
+                top: 60,
+                bottom: 20,
+                left: 10,
+                right: 10
+            };
+
+            const svg = d3.select("svg");
+            svg.attr("width", width).attr("height", height);
+
+            const yScale = d3.scaleBand()
+                .domain(data.map(d => d.了解程度))
+                .range([margin.top, height - margin.bottom])
+                .padding(0.1);
+
+            const xScaleLeft = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.了解程度) * 1.5])
+                .range([0, (width - margin.left - margin.right) / 2.5]);
+
+            const xScaleRight = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.领跑指数) * 1.5])
+                .range([0, (width - margin.left - margin.right) / 2.5]);
+
+            d3.selectAll(".bar-left")
+                .attr("x", d => width / 2 - xScaleLeft(d.了解程度))
+                .attr("y", d => yScale(d.品牌))
+                .attr("width", d => xScaleLeft(d.了解程度))
+                .attr("height", yScale.bandwidth());
+
+            d3.selectAll(".bar-right")
+                .attr("x", width / 2)
+                .attr("y", d => yScale(d.品牌))
+                .attr("width", d => xScaleRight(d.领跑指数))
+                .attr("height", yScale.bandwidth());
+
+            d3.selectAll(".label")
+                .attr("x", d => width / 2 + xScaleRight(d.领跑指数) + 5)
+                .attr("y", d => yScale(d.品牌) + yScale.bandwidth() / 2);
+
+            d3.selectAll(".label1")
+                .attr("x", width / 2 - 80)
+                .attr("y", margin.top - 30);
+
+            d3.selectAll(".label2")
+                .attr("x", width / 2 + 80)
+                .attr("y", margin.top - 30);
+        }
+
+        // 初始绘制图表
+        const width = window.innerWidth / 1.2;
+        const height = window.innerHeight;
+
+        const margin = {
+            top: 60,
+            bottom: 20,
+            left: 10,
+            right: 10
+        };
+
+        const svg = d3.select("#chart").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const yScale = d3.scaleBand()
+            .domain(data.map(d => d.品牌))
+            .range([margin.top, height - margin.bottom])
+            .padding(0.1);
+
+        const xScaleLeft = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.了解程度) * 1.5])
+            .range([0, (width - margin.left - margin.right) / 2.5]);
+
+        const xScaleRight = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.领跑指数) * 1.5])
+            .range([0, (width - margin.left - margin.right) / 2.5]);
+
+        // 左侧条形图（了解程度）
+        svg.selectAll(".bar-left")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar-left")
+            .attr("x", d => width / 2 - xScaleLeft(d.了解程度))
+            .attr("y", d => yScale(d.品牌))
+            .attr("width", d => xScaleLeft(d.了解程度))
+            .attr("height", yScale.bandwidth())
+            .attr("fill", d => getBarColor(d.品牌));
+
+        // 右侧条形图（领跑指数）
+        svg.selectAll(".bar-right")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar-right")
+            .attr("x", width / 2)
+            .attr("y", d => yScale(d.品牌))
+            .attr("width", d => xScaleRight(d.领跑指数))
+            .attr("height", yScale.bandwidth())
+            .attr("fill", d => getBarColor(d.品牌));
+
+        // 标签文字
+        svg.selectAll(".label")
+            .data(data)
+            .enter().append("text")
+            .attr("class", "label")
+            .attr("x", d => width / 2 + xScaleRight(d.领跑指数) + 5)
+            .attr("y", d => yScale(d.品牌) + yScale.bandwidth() / 2)
+            .text(d => d.品牌 + " : " + d.领跑指数.toFixed(1));
+
+        svg.append("text")
+            .attr("class", "label1")
+            .attr("x", width / 2 - 80)
+            .attr("y", margin.top - 30)
+            .text("了解程度");
+
+        svg.append("text")
+            .attr("class", "label2")
+            .attr("x", width / 2 + 80)
+            .attr("y", margin.top - 30)
+            .text("领跑指数");
+
+        updateChartSize();
+        window.addEventListener("resize", updateChartSize);
+    </script>
+</body>
+
+</html>

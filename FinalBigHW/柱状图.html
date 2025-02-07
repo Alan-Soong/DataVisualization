@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NKUers外出吃饭的选择</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* 设置 chart 容器的宽度和高度为 100% */
+        #chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* 让 SVG 自适应容器大小 */
+        #chart svg {
+            width: 100%;
+            height: auto;
+        }
+
+        /* 样式 */
+        text {
+            font-size: 30px;
+            fill: #333;
+        }
+
+        .label {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .label1 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .label2 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .divider {
+            stroke: black;
+            stroke-width: 1.5;
+        }
+
+        /* tooltip 样式 */
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        body {
+            font-family: 'Neon', cursive;
+            text-align: center;
+            font-weight: 1000;
+            /* 添加背景图 */
+            background-image: url('slight.jpg'); 
+            /* 将 'your-background-image.jpg' 替换为实际的背景图路径 */
+            background-size: cover;
+            /* 让背景图覆盖整个屏幕 */
+            background-repeat: no-repeat;
+            /* 不重复背景图 */
+            background-position: center;
+            /* 背景图在中心位置 */
+        }
+        
+        
+        #switchBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #switchBtn:hover {
+            background-color: #45a049;
+        }
+
+        /* 响应式设计 */
+        @media screen and (max-width: 768px) {
+            #chart svg {
+                width: 100%;
+                height: auto;
+            }
+
+            .label1,
+            .label2 {
+                font-size: 10px;
+            }
+
+            .tooltip {
+                font-size: 10px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            .label1,
+            .label2 {
+                font-size: 8px;
+            }
+
+            .tooltip {
+                font-size: 8px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <h2>NKUers外出吃饭的选择</h2>
+    <h5>数据来源于问卷调查</h5>
+
+    <div id="chart" width="100%" height="100%" viewBox="0 0 1500 1000" transform="scale(1.5)"></div>
+    <div id="tooltip" class="tooltip"></div>
+
+
+    <script>
+        // 数据集
+        const data = [{
+            "类别": "和府捞面",
+            "频数": 8,
+            "预算平均值": 54.0
+        }, {
+            "类别": "重庆小面",
+            "频数": 1,
+            "预算平均值": 30.0
+        }, {
+            "类别": "八爷炸酱面",
+            "频数": 1,
+            "预算平均值": 31.0
+        }, {
+            "类别": "柳州螺狮粉",
+            "频数": 1,
+            "预算平均值": 25.0
+        }, {
+            "类别": "板面",
+            "频数": 1,
+            "预算平均值": 13.0
+        }, {
+            "类别": "武汉热干面",
+            "频数": 1,
+            "预算平均值": 12.0
+        }, {
+            "类别": "流景面馆",
+            "频数": 1,
+            "预算平均值": 23.0
+        }, {
+            "类别": "西贝莜面村",
+            "频数": 4,
+            "预算平均值": 94.5
+        }, {
+            "类别": "松鹤楼",
+            "频数": 1,
+            "预算平均值": 60.0
+        }, {
+            "类别": "芸锦拉面",
+            "频数": 2,
+            "预算平均值": 46.5
+        }, {
+            "类别": "同发号",
+            "频数": 9,
+            "预算平均值": 104.1
+        }, {
+            "类别": "费大厨辣椒炒肉",
+            "频数": 8,
+            "预算平均值": 84.5
+        }, {
+            "类别": "外婆家",
+            "频数": 9,
+            "预算平均值": 81.67
+        }, {
+            "类别": "小作坊",
+            "频数": 2,
+            "预算平均值": 85.0
+        }, {
+            "类别": "川味居",
+            "频数": 3,
+            "预算平均值": 56.67
+        }, {
+            "类别": "青年公社",
+            "频数": 9,
+            "预算平均值": 109.67
+        }, {
+            "类别": "清雅",
+            "频数": 1,
+            "预算平均值": 50.0
+        }, {
+            "类别": "川人百味",
+            "频数": 1,
+            "预算平均值": 100.0
+        }, {
+            "类别": "宝轩渔府",
+            "频数": 1,
+            "预算平均值": 100.0
+        }, {
+            "类别": "桥头堡",
+            "频数": 1,
+            "预算平均值": 60.0
+        }, {
+            "类别": "东北妈妈菜馆",
+            "频数": 1,
+            "预算平均值": 107.0
+        }, {
+            "类别": "干饭湘",
+            "频数": 1,
+            "预算平均值": 70.0
+        }, {
+            "类别": "齐齐哈尔",
+            "频数": 10,
+            "预算平均值": 123.1
+        }, {
+            "类别": "东北虎",
+            "频数": 17,
+            "预算平均值": 114.0
+        }, {
+            "类别": "致青春",
+            "频数": 1,
+            "预算平均值": 81.0
+        }, {
+            "类别": "金喜娜",
+            "频数": 1,
+            "预算平均值": 151.0
+        }, {
+            "类别": "海底捞",
+            "频数": 43,
+            "预算平均值": 126.7
+        }, {
+            "类别": "呷哺呷哺",
+            "频数": 15,
+            "预算平均值": 131.7
+        }, {
+            "类别": "旬羊",
+            "频数": 1,
+            "预算平均值": 80.0
+        }, {
+            "类别": "芳竹园",
+            "频数": 15,
+            "预算平均值": 104.2
+        }, {
+            "类别": "赵鲜记",
+            "频数": 3,
+            "预算平均值": 163.3
+        }, {
+            "类别": "五里关",
+            "频数": 1,
+            "预算平均值": 100.0
+        }, {
+            "类别": "熊喵来了",
+            "频数": 4,
+            "预算平均值": 98.75
+        }, {
+            "类别": "袁记串串香",
+            "频数": 1,
+            "预算平均值": 195.0
+        }, {
+            "类别": "Osteria",
+            "频数": 2,
+            "预算平均值": 325.0
+        }, {
+            "类别": "萨莉亚",
+            "频数": 17,
+            "预算平均值": 87.5
+        }, {
+            "类别": "比格",
+            "频数": 7,
+            "预算平均值": 99.1
+        }, {
+            "类别": "娜娜家",
+            "频数": 2,
+            "预算平均值": 140.0
+        }, {
+            "类别": "必胜客",
+            "频数": 3,
+            "预算平均值": 127.3
+        }, {
+            "类别": "杨国福",
+            "频数": 13,
+            "预算平均值": 36.1
+        }, {
+            "类别": "张亮麻辣烫",
+            "频数": 8,
+            "预算平均值": 50.6
+        }, {
+            "类别": "正新鸡排",
+            "频数": 11,
+            "预算平均值": 26.5
+        }, {
+            "类别": "塔斯汀",
+            "频数": 2,
+            "预算平均值": 30.0
+        }, {
+            "类别": "滨寿司",
+            "频数": 4,
+            "预算平均值": 26.3
+        }, {
+            "类别": "麦当劳",
+            "频数": 5,
+            "预算平均值": 59.0
+        }, {
+            "类别": "肉夹馍",
+            "频数": 1,
+            "预算平均值": 30.0
+        }, {
+            "类别": "醉面",
+            "频数": 1,
+            "预算平均值": 40.0
+        }, {
+            "类别": "吉祥馄饨",
+            "频数": 2,
+            "预算平均值": 32.0
+        }, {
+            "类别": "肯德基",
+            "频数": 2,
+            "预算平均值": 49.0
+        }, {
+            "类别": "米村拌饭",
+            "频数": 1,
+            "预算平均值": 24.0
+        }];
+
+        // 画布参数
+        //const width = 1500;
+        //const height = Math.max(1000, data.length * 15); // 动态高度
+        const width = window.innerWidth;
+        const height = window.innerHeight; // 动态高度
+        const margin = {
+            top: 24,
+            bottom: 10,
+            left: 10,
+            right: 10
+        };
+
+        // 创建 SVG 画布
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", "0 0 "+ width +" "+ height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        const tooltip = d3.select("#tooltip");
+
+        // Y 轴比例尺（类目）
+        const yScale = d3.scaleBand()
+            .domain(data.map(d => d.类别))
+            .range([margin.top, height - margin.bottom])
+            .padding(0.1);
+
+        // X 轴比例尺（两侧柱形的长度）
+        const xScaleLeft = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.频数)])
+            .range([0, (width - margin.left - margin.right) / 3]);
+
+        const xScaleRight = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.预算平均值)])
+            .range([0, (width - margin.left - margin.right) / 3]);
+
+        // 添加顶部标签
+        svg.append("text")
+            .attr("x", width / 2 - 80)
+            .attr("y", margin.top)
+            .attr("class", "label1")
+            .style("text-anchor", "middle")
+            .text("频数");
+
+        svg.append("text")
+            .attr("x", width / 2 + 80)
+            .attr("y", margin.top)
+            .attr("class", "label2")
+            .style("text-anchor", "middle")
+            .text("预算平均值");
+
+        // 左侧柱形：频数
+        svg.selectAll(".bar-left")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar-left")
+            .attr("x", d => width / 2 - xScaleLeft(d.频数))
+            .attr("y", d => yScale(d.类别))
+            .attr("width", d => xScaleLeft(d.频数))
+            .attr("height", yScale.bandwidth())
+            .attr("fill", d => {
+                // 指定颜色区间
+                if (["和府捞面", "重庆小面", "八爷炸酱面", "萨莉亚 ", "柳州螺狮粉", "板面", "武汉热干面", "流景面馆", "西贝莜面村", "松鹤楼", "芸锦拉面"].includes(d.类别)) {
+                    return "#FFA07A"; // 浅橙色
+                } else if (["同发号", "费大厨辣椒炒肉", "外婆家", "小作坊", "川味居", "青年公社", "清雅", "川人百味", "宝轩渔府", "桥头堡", "东北妈妈菜馆", "干饭湘"].includes(d.类别)) {
+                    return "#FF8C00"; // 橙色
+                } else if (["齐齐哈尔", "东北虎", "致青春", "金喜娜"].includes(d.类别)) {
+                    return "#FF4500"; // 深橙色
+                } else if (["海底捞", "呷哺呷哺", "旬羊", "芳竹园", "赵鲜记", "五里关", "熊喵来了", "袁记串串香"].includes(d.类别)) {
+                    return "#FF6347"; // 暗橙色
+                } else if (["Osteria", "萨莉亚", "比格", "娜娜家", "必胜客"].includes(d.类别)) {
+                    return "#E25822"; // 焦橙色
+                } else if (["杨国福", "张亮麻辣烫", "正新鸡排", "塔斯汀", "滨寿司", "麦当劳", "肉夹馍", "醉面", "吉祥馄饨", "肯德基", "米村拌饭"].includes(d.类别)) {
+                    return "#A52A2A"; // 深焦橙
+                } else {
+                    return "steelblue"; // 默认颜色
+                }
+            })
+            .on("mouseover", (event, d) => {
+                tooltip.style("visibility", "visible")
+                    .text(`频数: ${d.频数}`);
+            })
+            .on("mousemove", (event) => {
+                tooltip.style("top", (event.pageY - 10) + "px")
+                    .style("left", (event.pageX + 10) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.style("visibility", "hidden");
+            })
+            .transition()  // 添加过渡效果
+            .duration(2000)  // 动画持续时间，单位毫秒
+            .attr("width", d => xScaleLeft(d.频数));  // 宽度从0过渡到实际宽度
+
+
+        // 定义区间及颜色
+        const colorMapping = [
+            {
+                range: [
+                    "和府捞面", "重庆小面", "八爷炸酱面", "柳州螺狮粉",
+                    "板面", "武汉热干面", "流景面馆", "西贝莜面村", "松鹤楼", "芸锦拉面"
+                ],
+                color: "#FF9999" // 浅红色
+            },
+            {
+                range: [
+                    "同发号", "费大厨辣椒炒肉", "外婆家", "小作坊", "川味居", "青年公社", "清雅", "川人百味", "宝轩渔府", "桥头堡", "东北妈妈菜馆", "干饭湘"
+                ],
+                color: "#FF6666" // 中红色
+            },
+            {
+                range: [
+                    "齐齐哈尔", "东北虎", "致青春", "金喜娜"
+                ],
+                color: "#FF3333" // 深红色
+            },
+            {
+                range: [
+                    "海底捞", "呷哺呷哺", "旬羊", "芳竹园", "赵鲜记", "五里关", "熊喵来了", "袁记串串香"
+                ],
+                color: "#CC0000" // 暗红色
+            },
+            {
+                range: [
+                    "Osteria", "萨莉亚", "比格", "娜娜家", "必胜客"
+                ],
+                color: "#990000" // 酒红色
+            },
+            {
+                range: [
+                    "杨国福", "张亮麻辣烫", "正新鸡排", "塔斯汀", "滨寿司", "麦当劳", "肉夹馍", "醉面", "吉祥馄饨", "肯德基", "米村拌饭"
+                ],
+                color: "#550000" // 珊瑚红
+            }
+        ];
+
+        // 根据类别获取对应颜色
+        function getBarColor(category) {
+            for (const mapping of colorMapping) {
+                if (mapping.range.includes(category.trim())) {
+                    return mapping.color;
+                }
+            }
+            return "orange"; // 默认颜色
+        }
+
+        // 右侧柱形：预算平均值
+        svg.selectAll(".bar-right")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar-right")
+            .attr("x", width / 2)
+            .attr("y", d => yScale(d.类别))
+            .attr("width", d => xScaleRight(d.预算平均值))
+            .attr("height", yScale.bandwidth())
+            .attr("fill", d => getBarColor(d.类别))
+            .on("mouseover", (event, d) => {
+                tooltip.style("visibility", "visible")
+                    .text(`预算平均值: ${d.预算平均值}`);
+            })
+            .on("mousemove", (event) => {
+                tooltip.style("top", (event.pageY - 10) + "px")
+                    .style("left", (event.pageX + 10) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.style("visibility", "hidden");
+            })
+            .transition()  // 添加过渡效果
+            .duration(2000)  // 动画持续时间
+            .attr("width", d => xScaleRight(d.预算平均值));  // 宽度从0过渡到实际宽度
+
+        // 在右侧柱形的右侧添加类别名称
+        svg.selectAll(".label")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class", "label")
+            .attr("x", d => width / 2 + xScaleRight(d.预算平均值) + 5)
+            .attr("y", d => yScale(d.类别) + yScale.bandwidth() / 2)
+            .attr("dy", "0.35em")
+            .text(d => d.类别)
+            .transition()  // 添加过渡效果
+            .duration(2000)  // 动画持续时间
+            .style("opacity", 1);  // 文本逐渐出现
+
+
+
+    </script>
+
+    <div>
+        <a href="词云.html">
+            <button id="switchBtn" onclick="switchPage()">返回</button>
+        </a>
+    </div>
+</body>
+
+</html>

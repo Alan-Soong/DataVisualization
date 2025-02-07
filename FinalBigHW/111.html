@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词云示例</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+    <style>
+        #wordCloud {
+            width: 90vw;
+            /* 宽度设置为视口宽度的 90% */
+            height: 78vh;
+            /* 高度设置为视口高度的 60% */
+            margin: 0 auto;
+            border: 2px solid #ddd;
+            /* position: inherit; */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body {
+            font-family: 'Lobster', cursive;
+            font-weight: 1000;
+            /* font-family: 'Neon', cursive; */
+            text-align: center;
+            padding: 45px;
+            /* 添加背景图 */
+            background-image: url('bright.jpg');
+            /* 将 'your-background-image.jpg' 替换为实际的背景图路径 */
+            background-size: cover;
+            /* 让背景图覆盖整个屏幕 */
+            background-repeat: no-repeat;
+            /* 不重复背景图 */
+            background-position: center;
+            /* 背景图在中心位置 */
+        }
+
+        /* 用于淡入页面的 CSS 动画 */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+        }
+
+        /* 用于淡出页面的 CSS 动画 */
+        .fade-out {
+            opacity: 1;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .fade-out.hide {
+            opacity: 0;
+        }
+
+        .word.active {
+            color: #ff6347;
+            font-size: 40px;
+            z-index: 10;
+            /* Ensure the active word stays on top */
+        }
+
+        .word.inactive {
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
+
+        .word {
+            cursor: pointer;
+        }
+
+        /* 拖拽时的样式 */
+        .dragging {
+            cursor: grabbing;
+        }
+
+        #resetBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #resetBtn:hover {
+            background-color: #2980b9;
+        }
+
+        /* 用于淡入页面的 CSS 动画 */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+        }
+
+        /* 用于淡出页面的 CSS 动画 */
+        .fade-out {
+            opacity: 1;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .fade-out.hide {
+            opacity: 0;
+        }
+
+        #switchBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #switchBtn:hover {
+            background-color: #45a049;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <header>
+        <!-- <h1>欢迎来到我的个人网站</h1> -->
+        <h1>大家喜欢去的饭店一览</h1>
+    </header>
+    <main>
+        <div id="wordCloud"></div>
+    </main>
+
+    <!-- 引入本地 D3.js -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <!-- 引入本地 d3-cloud -->
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script>
+
+    <!-- 创建一个弹窗 div -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // 词云数据
+        const words = [
+            { text: "西贝莜面村", size: 40, link: "https://map.baidu.com/search/%E8%A5%BF%E8%B4%9D%E8%8E%9C%E9%9D%A2%E6%9D%91/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%A5%BF%E8%B4%9D%E8%8E%9C%E9%9D%A2%E6%9D%91&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "和府捞面", size: 70, link: "https://map.baidu.com/search/%E5%92%8C%E5%BA%9C%E6%8D%9E%E9%9D%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%92%8C%E5%BA%9C%E6%8D%9E%E9%9D%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "八爷炸酱面", size: 10, link: "https://map.baidu.com/search/%E5%85%AB%E7%88%B7%E7%82%B8%E9%85%B1%E9%9D%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%85%AB%E7%88%B7%E7%82%B8%E9%85%B1%E9%9D%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "柳州螺蛳粉", size: 10, link: "https://map.baidu.com/search/%E6%9F%B3%E5%B7%9E%E8%9E%BA%E8%9B%B3%E7%B2%89/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%9F%B3%E5%B7%9E%E8%9E%BA%E8%9B%B3%E7%B2%89&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "武汉热干面", size: 10, link: "https://map.baidu.com/search/%E6%AD%A6%E6%B1%89%E7%83%AD%E5%B9%B2%E9%9D%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%AD%A6%E6%B1%89%E7%83%AD%E5%B9%B2%E9%9D%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "流景面馆", size: 10, link: "https://map.baidu.com/search/%E6%B5%81%E6%99%AF%E9%9D%A2%E9%A6%86/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%B5%81%E6%99%AF%E9%9D%A2%E9%A6%86&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "云锦拉面", size: 10, link: "https://map.baidu.com/search/%E4%BA%91%E9%94%AE%E6%8B%89%E9%9D%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E4%BA%91%E9%94%AE%E6%8B%89%E9%9D%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "街边小作坊", size: 30, link: "https://bilibili.com" },
+            { text: "松鹤楼", size: 10, link: "https://map.baidu.com/search/%E6%9D%BE%E9%B9%A4%E6%A5%BC/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%9D%BE%E9%B9%A4%E6%A5%BC&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+
+
+            { text: "费大厨辣椒炒肉", size: 80, link: "https://map.baidu.com/search/%E8%B4%B9%E5%A4%A7%E5%8E%85%E8%BE%A3%E6%A4%92%E7%82%92%E8%82%89/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%B4%B9%E5%A4%A7%E5%8E%85%E8%BE%A3%E6%A4%92%E7%82%92%E8%82%89&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "同发号", size: 100, link: "https://map.baidu.com/search/%E5%90%8C%E5%8F%91%E5%8F%B7/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%90%8C%E5%8F%91%E5%8F%B7&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "外婆家", size: 90, link: "https://map.baidu.com/search/%E5%A4%96%E5%A9%86%E5%AE%B6/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%A4%96%E5%A9%86%E5%AE%B6&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "青年公社", size: 90, link: "https://map.baidu.com/search/%E9%9D%92%E5%B9%B4%E5%85%AC%E7%A4%BE/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%9D%92%E5%B9%B4%E5%85%AC%E7%A4%BE&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "川味居", size: 30, link: "https://map.baidu.com/search/%E5%B7%9D%E5%91%B3%E5%B1%85/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%B7%9D%E5%91%B3%E5%B1%85&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "干饭湘", size: 10, link: "https://map.baidu.com/search/%E5%B9%B2%E9%A5%AD%E9%9B%85/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%B9%B2%E9%A5%AD%E9%9B%85&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "宝轩渔府", size: 10, link: "https://map.baidu.com/search/%E5%AE%9D%E8%BD%A9%E6%B8%94%E5%BA%9C/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%AE%9D%E8%BD%A9%E6%B8%94%E5%BA%9C&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "桥头堡", size: 10, link: "https://map.baidu.com/search/%E6%A1%A5%E5%A4%B4%E5%A0%A1/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%A1%A5%E5%A4%B4%E5%A0%A1&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "东北妈妈菜馆", size: 10, link: "https://map.baidu.com/search/%E4%B8%9C%E5%8C%97%E5%A6%88%E5%A6%88%E8%8F%9C%E9%A6%86/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E4%B8%9C%E5%8C%97%E5%A6%88%E5%A6%88%E8%8F%9C%E9%A6%86&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "板面炒菜", size: 10, link: "https://map.baidu.com/search/%E6%9D%BF%E9%9D%A2%E7%82%92%E8%8F%9C/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%9D%BF%E9%9D%A2%E7%82%92%E8%8F%9C&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "川人百味", size: 10, link: "https://map.baidu.com/search/%E5%B7%9D%E4%BA%BA%E7%99%BE%E5%91%B3/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%B7%9D%E4%BA%BA%E7%99%BE%E5%91%B3&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "清雅", size: 10, link: "https://map.baidu.com/search/%E6%B8%85%E9%9B%85/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%B8%85%E9%9B%85&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+
+            { text: "齐齐哈尔烤肉", size: 130, link: "https://map.baidu.com/search/%E9%BD%90%E9%BD%90%E5%93%88%E5%B0%94%E7%83%A4%E8%82%89/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%BD%90%E9%BD%90%E5%93%88%E5%B0%94%E7%83%A4%E8%82%89&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "东北虎", size: 190, link: "https://map.baidu.com/search/%E4%B8%9C%E5%8C%97%E8%99%8E/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E4%B8%9C%E5%8C%97%E8%99%8E&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "致青春自助烧烤", size: 10, link: "https://map.baidu.com/search/%E8%87%B4%E9%9D%92%E6%98%A5%E7%83%A4%E8%82%89%E8%87%AA%E5%8A%A9/@13042662.455,4713847.3,19z?querytype=s&da_src=shareurl&wd=%E8%87%B4%E9%9D%92%E6%98%A5%E8%87%AA%E5%8A%A9%E7%83%A7%E7%83%A4&c=332&src=0&pn=0&sug=0&l=10&b=(12903131.555645552,4650440.6992935445;13105727.856339827,4886202.230706455)&from=webmap&biz_forward=%7B%22scaler%22:2,%22styles%22:%22pl%22%7D&device_ratio=2" },
+            { text: "西南村烧烤", size: 10, link: "https://map.baidu.com/search/%E8%A5%BF%E5%8D%97%E6%9D%91%E7%83%A4%E7%83%A4/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%A5%BF%E5%8D%97%E6%9D%91%E7%83%A4%E7%83%A4&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "金喜娜", size: 10, link: "https://map.baidu.com/search/%E9%87%91%E5%96%9C%E5%A8%9C/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%87%91%E5%96%9C%E5%A8%9C&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+
+            { text: "海底捞", size: 180, link: "https://map.baidu.com/search/%E6%B5%B7%E5%BA%95%E6%8D%9E/@13054349.6,4713162.34,14z?querytype=s&da_src=shareurl&wd=%E6%B5%B7%E5%BA%95%E6%8D%9E&c=332&src=0&pn=0&sug=0&l=13&b=(13029681.85,4696368.03;13084305.85,4727696.03)&from=webmap&biz_forward=%7B%22scaler%22:2,%22styles%22:%22pl%22%7D&device_ratio=2" },
+            { text: "芳竹园", size: 190, link: "https://map.baidu.com/search/%E8%8A%B3%E7%AB%B9%E5%9B%AD/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%8A%B3%E7%AB%B9%E5%9B%AD&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "旬羊", size: 10, link: "https://map.baidu.com/search/%E6%97%AC%E7%BE%8A/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%97%AC%E7%BE%8A&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "赵鲜记", size: 20, link: "https://map.baidu.com/search/%E8%B5%B5%E9%B2%9C%E8%AE%B0/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%B5%B5%E9%B2%9C%E8%AE%B0&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "熊喵来了", size: 40, link: "https://map.baidu.com/search/%E7%86%8A%E5%96%B5%E6%9D%A5%E4%BA%86/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E7%86%8A%E5%96%B5%E6%9D%A5%E4%BA%86&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "五里关", size: 10, link: "https://map.baidu.com/search/%E4%BA%94%E9%87%8C%E5%85%B3/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E4%BA%94%E9%87%8C%E5%85%B3&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+
+            { text: "杨国福", size: 130, link: "https://map.baidu.com/search/%E6%9D%A8%E5%9B%BD%E7%A6%8F/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%9D%A8%E5%9B%BD%E7%A6%8F&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "张亮麻辣烫", size: 90, link: "https://map.baidu.com/search/%E5%BC%A0%E4%BA%AE%E9%BA%BB%E8%BE%A3%E7%83%AB/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%BC%A0%E4%BA%AE%E9%BA%BB%E8%BE%A3%E7%83%AB&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "正新鸡排", size: 120, link: "https://map.baidu.com/search/%E6%AD%A3%E6%96%B0%E9%B8%A1%E6%8E%92/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%AD%A3%E6%96%B0%E9%B8%A1%E6%8E%92&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "吉祥馄饨", size: 40, link: "https://map.baidu.com/search/%E5%90%89%E5%B0%96%E9%A6%84%E9%A5%A8/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%90%89%E5%B0%96%E9%A6%84%E9%A5%A8&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "滨寿司", size: 70, link: "https://map.baidu.com/search/%E5%B9%BF%E5%B7%9E%E5%B8%82%E5%8D%97%E6%98%8E%E8%82%89%E9%85%92/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%B9%BF%E5%B7%9E%E5%B8%82%E5%8D%97%E6%98%8E%E8%82%89%E9%85%92&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "醉面", size: 10, link: "https://map.baidu.com/search/%E9%86%89%E9%9D%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%86%89%E9%9D%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+
+            { text: "塔斯汀", size: 20, link: "https://map.baidu.com/search/%E5%A1%94%E6%96%AF%E6%B1%80/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%A1%94%E6%96%AF%E6%B1%80&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "麦当劳", size: 30, link: "https://map.baidu.com/search/%E9%BA%A6%E5%BD%93%E5%8A%B3/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%BA%A6%E5%BD%93%E5%8A%B3&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "萨莉亚", size: 170, link: "https://map.baidu.com/search/%E8%90%A8%E8%8E%89%E4%BA%9A/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E8%90%A8%E8%8E%89%E4%BA%9A&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "比格", size: 70, link: "https://map.baidu.com/search/%E6%AF%94%E6%A0%BC/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E6%AF%94%E6%A0%BC&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "娜娜家", size: 20, link: "https://map.baidu.com/search/%E5%A8%9C%E5%A8%9C%E5%AE%B6/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%A8%9C%E5%A8%9C%E5%AE%B6&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "Osteria", size: 20, link: "https://map.baidu.com/search/Osteria/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=Osteria&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "小七的魔法厨房", size: 10, link: "https://map.baidu.com/search/%E5%B0%8F%E4%B8%83%E7%9A%84%E9%AD%94%E6%B3%95%E5%8E%A8%E5%8F%B0/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%B0%8F%E4%B8%83%E7%9A%84%E9%AD%94%E6%B3%95%E5%8E%A8%E5%8F%B0&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "必胜客", size: 30, link: "https://map.baidu.com/search/%E5%BF%85%E6%8C%88%E5%AE%A2/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E5%BF%85%E6%8C%88%E5%AE%A2&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" },
+            { text: "鹿园", size: 10, link: "https://map.baidu.com/search/%E9%B9%BF%E5%9B%AD/@13063136.435400348,4706192.08,12.39z?querytype=con&wd=%E9%B9%BF%E5%9B%AD&c=332&provider=pc-aladin&pn=0&device_ratio=2&da_src=shareurl" }
+
+        ];
+
+
+
+        // 原始大小备份，用于恢复
+        const enlargedSize = 200;
+        const enmediumedSize = 100;
+
+        // 保存初始位置
+        function saveInitialPositions(words) {
+            initialPositions = words.map(function (word) {
+                return {
+                    text: word.text,
+                    x: word.x,
+                    y: word.y,
+                    size: word.size,
+                    rotate: word.rotate
+                };
+            });
+        }
+
+        // 绘制函数
+        function draw(words) {
+            var svg = d3.select("#wordCloud").append("svg").style("background-color", "#f0f4f4")
+                .attr("width", document.getElementById('wordCloud').offsetWidth)
+                .attr("height", document.getElementById('wordCloud').offsetHeight);
+            var g = svg.append("g").attr("transform", "translate(" + document.getElementById('wordCloud').offsetWidth / 2 +
+                "," + document.getElementById('wordCloud').offsetHeight / 2 + ")");
+
+            // 绘制单词
+            var wordElements = g.selectAll("text").data(words).enter().append("text")
+                .style("font-size", function (d) {
+                    // 如果词的尺寸小于20，则设置为20，否则使用词的原始尺寸
+                    return d.size < 20 ? 20 : d.size + "px";
+                })
+                .style("fill", function (d, i) {
+                    return d3.schemeCategory10[i % 10];
+                }) // 设置颜色
+                .attr("text-anchor", "middle").attr("transform", function (d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                }).text(function (d) {
+                    return d.text;
+                }).style("opacity", 1).call(d3.drag() // 添加拖拽功能
+                    .on("start", function (event, d) {
+                        d3.select(this).classed("dragging", true);
+                    }).on("drag", function (event, d) {
+                        // 更新拖拽词的位置
+                        d.x = event.x;
+                        d.y = event.y;
+                        // 更新词的位置
+                        d3.select(this).attr("transform", "translate(" + [d.x, d.y] + ")");
+                        simulation.alphaTarget(0.3).restart(); // 启动力引导布局
+                    }).on("end", function (event, d) {
+                        d3.select(this).classed("dragging", false);
+                        simulation.alphaTarget(0); // 停止力引导布局
+                    }))
+                .on("click", function (event, d) {
+                    // 在点击时首先为页面添加淡出效果
+                    document.body.classList.add("fade-out");
+                    document.body.classList.remove("show"); // 关闭淡入效果
+
+                    // 延迟跳转到搜索结果页面，允许动画完成
+                    setTimeout(function () {
+                        window.open(d.link, "_blank"); // 在新标签页打开搜索结果
+                    }, 1000); // 设置延迟时间，确保淡出动画完成
+                })
+                // 鼠标悬浮事件，放大文字并引导位置
+                .on("mouseover", function (event, d) {
+                    wordElements.interrupt(); // 取消所有正在进行的过渡
+                    // 当前词变大，其他词变透明
+                    wordElements.style("opacity", function (e) {
+                        return e === d ? 1 : 0.2; // 当前词透明度为1，其他词透明度为0.2
+                    });
+                    let eS;
+                    if (d.size > 150) {
+                        eS = enlargedSize;
+                    } else if (d.size > 80) {
+                        eS = enmediumedSize;
+                    } else {
+                        eS = 80;
+                    }
+
+                    // 放大该词并使其突出，改变位置
+                    d3.select(this)
+                        .transition().duration(500)
+                        .style("font-size", eS + "px")
+                        .attr("transform", "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"); // 可增加平移效果
+
+                    // 可以添加更复杂的平移逻辑，将当前词向某个方向突出
+                    d3.select(this)
+                        .transition().duration(500)
+                        .attr("transform", "translate(" + [d.x, d.y - 30] + ")rotate(" + d.rotate + ")"); // 平移到上方
+                })
+                // 鼠标移开事件，恢复原始大小并恢复位置
+                .on("mouseout", function (event, d) {
+                    wordElements.interrupt(); // 取消所有正在进行的过渡
+                    // 恢复所有词的大小和透明度
+                    wordElements.transition().duration(500)
+                        .style("font-size", function (d) {
+                            return d.size < 20 ? 20 : d.size + "px";
+                        })
+                        .style("opacity", 1)
+                        // .attr("transform", function (d) {
+                        //     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                        // }); // 恢复原位置
+                });
+
+            // 获取词云容器的尺寸
+            var containerWidth = document.getElementById('wordCloud').offsetWidth;
+            var containerHeight = document.getElementById('wordCloud').offsetHeight;
+
+            // 创建力引导布局
+            var simulation = d3.forceSimulation(words)
+                //.force("charge", d3.forceManyBody().strength(-5)) // 节点之间的排斥力
+                .force("center", d3.forceCenter(0, 0)) // 将所有词集中在中心
+                .force("collision", d3.forceCollide().radius(function (d) {
+                    return d.size / 2 + 10;
+                })) // 节点之间的碰撞力
+                .force("charge", d3.forceManyBody().strength(-15)) // 添加排斥力
+                //.stop();
+
+            // 更新力引导布局
+            simulation.on("tick", function () {
+                wordElements.attr("transform", function (d) {
+                    return "translate(" + [d.x, d.y] + ")";
+                })
+                    // 在这里也应用字体大小的逻辑
+                    .style("font-size", function (d) {
+                        return d.size < 20 ? 20 : d.size + "px";
+                    });
+            });
+
+            // 启动布局计算
+            simulation.nodes(words);
+            simulation.alpha(1).restart();
+
+            // 保存初始位置
+            saveInitialPositions(words);
+        }
+
+        // 使用 d3-cloud 设置词云的参数
+        const layout = d3.layout.cloud()
+            .size([document.getElementById('wordCloud').offsetWidth, document.getElementById('wordCloud').offsetHeight])
+            .words(words) // 设置词云的内容
+            .padding(0.5) // 单词之间的间距
+            .fontSize(function (d) {
+                return d.size / 2;
+            }) // 字体大小根据频率变化
+            .rotate(0).spiral("archimedean") // 设置单词排列的螺旋方式
+            .on("end", draw); // 完成词云绘制时调用 draw 函数
+
+        // // 复原词云按钮事件
+        // d3.select("#resetBtn").on("click", function () {
+        //     words.forEach(function (word, index) {
+        //         // 恢复词的位置、大小和旋转角度
+        //         word.x = initialPositions[index].x;
+        //         word.y = initialPositions[index].y;
+        //         word.size = initialPositions[index].size;
+        //         word.rotate = initialPositions[index].rotate;
+        //     });
+
+        //     // 重新计算布局并更新显示
+        //     simulation.nodes(words);
+        //     simulation.alpha(1).restart();
+        // });
+
+        function updateSVGSize() {
+
+            var layoutWidth = document.getElementById('wordCloud').offsetWidth;
+            var layoutHeight = document.getElementById('wordCloud').offsetHeight;
+
+            // 清空词云容器
+            d3.select("#wordCloud").html(""); // 清空之前的内容
+
+            var svg = d3.select("#wordCloud svg");
+            svg.attr("width", layoutWidth)
+                .attr("height", layoutHeight);
+
+            //draw.simulation.force("center", d3.forceCenter(0, 0)); // 更新词云中心
+            // 更新词云布局的大小
+            layout.size([layoutWidth, layoutHeight]);
+            layout.start();
+
+        }
+
+        // 初始调用以设置初始大小
+        updateSVGSize();
+
+        // 重新开始布局的计算
+        // layout.start();
+        // 在窗口大小变化时调用
+        window.addEventListener("resize", updateSVGSize);
+
+
+
+
+    </script>
+
+    <div>
+        <a href="折线.html">
+            <button id="switchBtn">折线图</button>
+
+        </a>
+        <a href="柱状图.html">
+            <button id="switchBtn">柱状图</button>
+
+        </a>
+        <a href="地图.html">
+            <button id="switchBtn">地图</button>
+
+        </a>
+        <a href="散点图.html">
+            <button id="switchBtn">散点图</button>
+
+        </a>
+
+    </div>
+
+</body>
+
+</html>
