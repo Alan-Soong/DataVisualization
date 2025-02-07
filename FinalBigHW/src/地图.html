@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国地图 - GDP与餐饮收入展示</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson@3.1.0/dist/topojson.min.js"></script>
+  <style>
+    body {
+      font-family: 'Lobster', cursive;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      /* display: flex; */
+      justify-content: center;
+      /* 水平居中 */
+      align-items: center;
+      /* 垂直居中 */
+      height: 100vh;
+      /* 视口高度 */
+      /* background-color: #f0f0f0; */
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      /* 为伪元素定位做准备，设置相对定位 */
+    }
+    /* 全局布局 */
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("light.jpg");
+      /* 替换为实际的图片路径 */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      /* 可根据需要设置图片位置 */
+      opacity: 0.5;
+      /* 设置透明度，这里是50%透明，可按需修改取值范围是0 - 1 */
+      z-index: -1;
+      /* 将伪元素置于页面内容下方 */
+    }
+
+
+    .map {
+      width: 100%;
+      height: 80vh;
+      /* 默认高度为视口的 80% */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .province {
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    .province-hover {
+      fill: rgba(0, 128, 255, 0.7);
+    }
+
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .title {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .legend {
+      font-size: 14px;
+    }
+
+    #switchBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* 父容器 */
+    .button-container {
+      text-align: center;
+      /* 水平居中 */
+    }
+
+    #switchBtn:hover {
+      background-color: #45a049;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 18px;
+      }
+
+      .legend {
+        font-size: 12px;
+      }
+
+      /* 在小屏幕设备下，地图的高度减少为 60vh */
+      .map {
+        height: 60vh;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .title {
+        font-size: 16px;
+      }
+
+      .legend {
+        font-size: 10px;
+      }
+
+      /* 在非常小的屏幕设备下，地图的高度减少为 50vh */
+      .map {
+        height: 50vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="title">中国省份GDP与餐饮收入占比</div>
+  <div class="map"></div>
+  <div class="tooltip"></div>
+
+  <script>
+    // 模拟数据：省份的GDP与餐饮收入
+    const data = [
+      { province: '广东', gdp: 135673.16, yoy: 5763.44 },
+      { province: '江苏', gdp: 128222.20, yoy: 4907.00 },
+      { province: '山东', gdp: 92068.70, yoy: 4345.50 },
+      { province: '浙江', gdp: 82553.00, yoy: 3662.00 },
+      { province: '四川', gdp: 60132.90, yoy: 3597.40 },
+      { province: '湖北', gdp: 55803.63, yoy: 3478.86 },
+      { province: '安徽', gdp: 47050.60, yoy: 2925.60 },
+      { province: '河南', gdp: 59132.39, yoy: 2887.00 },
+      { province: '湖南', gdp: 50012.90, yoy: 2575.50 },
+      { province: '台湾', gdp: 53273.90, yoy: 2310.71 },
+      { province: '重庆', gdp: 30145.79, yoy: 2310.66 },
+      { province: '福建', gdp: 54355.10, yoy: 2090.00 },
+      { province: '云南', gdp: 30021.12, yoy: 1807.72 },
+      { province: '江西', gdp: 32200.10, yoy: 1538.80 },
+      { province: '上海', gdp: 47218.66, yoy: 1505.26 },
+      { province: '北京', gdp: 43760.70, yoy: 1314.60 },
+      { province: '河北', gdp: 43944.10, yoy: 1304.50 },
+      { province: '广西', gdp: 27202.39, yoy: 1365.96 },
+      { province: '陕西', gdp: 33786.07, yoy: 1248.99 },
+      { province: '天津', gdp: 16737.30, yoy: 1015.25 },
+      { province: '香港', gdp: 27024.09, yoy: 986.04 },
+      { province: '辽宁', gdp: 30209.40, yoy: 901.50 },
+      { province: '山西', gdp: 25698.18, yoy: 847.20 },
+      { province: '内蒙古', gdp: 24627.00, yoy: 666.40 },
+      { province: '黑龙江', gdp: 15883.90, yoy: 583.30 },
+      { province: '吉林', gdp: 13531.19, yoy: 562.20 },
+      { province: '贵州', gdp: 20913.25, yoy: 562.09 },
+      { province: '新疆', gdp: 19125.91, yoy: 508.83 },
+      { province: '甘肃', gdp: 11863.80, yoy: 498.60 },
+      { province: '海南', gdp: 7551.18, yoy: 350.95 },
+      { province: '宁夏', gdp: 5314.95, yoy: 183.52 },
+      { province: '西藏', gdp: 2392.67, yoy: 90.27 },
+      { province: '青海', gdp: 3799.06, yoy: 78.80 }
+    ];
+
+    // 计算每个省的餐饮收入占比
+    data.forEach(d => {
+      d.ratio = (d.yoy / d.gdp) * 100; // 占比
+    });
+
+    // 创建SVG容器并设置宽高
+
+    const svg = d3.select(".map")
+      .append("svg")
+      .attr("width", "100%")
+      .attr("height", "100%");
+
+    // 初始化投影
+    let projection, path, width, height;
+
+    // 创建颜色比例尺：占比越高，颜色越深
+    const colorScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.ratio)])  // 最小值到最大值
+      .range(["#ffffe0", "#8B0000"]);  // 浅黄色到深红褐色
+
+    // 设置比例尺与路径
+    function setProjection() {
+      width = window.innerWidth;
+      height = window.innerHeight * 0.8; // 高度为视口的80%
+
+      // 计算适合地图的缩放比例，保证地图大小占用固定比例
+      const scale = Math.min(width, height); // 地图占用屏幕的60%
+
+      // 设置新的投影
+      projection = d3.geoMercator().center([105, 38]).scale(scale).translate([width / 2, height / 2]);
+      path = d3.geoPath().projection(projection);
+
+      svg.attr("width", width).attr("height", height);
+
+      // 更新地图
+      updateMap();
+    }
+
+    // 创建tooltip
+    const tooltip = d3.select(".tooltip");
+
+    function updateMap() {
+      // 加载GeoJSON中国地图数据（使用提供的有效 URL）
+      d3.json("https://geojson.cn/api/china/china.json").then(function (geoData) {
+        // 清空现有地图
+        svg.selectAll("*").remove();
+
+        // 绘制省份
+        svg.selectAll(".province")
+          .data(geoData.features)
+          .enter()
+          .append("path")
+          .attr("class", "province")
+          .attr("d", path)
+          .attr("fill", function (d) {
+            const provinceName = d.properties.name;
+            const provinceData = data.find(p => p.province === provinceName);
+            if (provinceData) {
+              return colorScale(provinceData.ratio); // 根据餐饮收入占比映射颜色
+            }
+            return "#dcdcdc"; // 默认颜色
+          })
+          .on("mouseover", function (event, d) {
+            const provinceName = d.properties.name;
+            const provinceData = data.find(p => p.province === provinceName);
+            if (provinceData) {
+              tooltip.transition().duration(200).style("opacity", .9);
+              tooltip.html(`${provinceName}<br>GDP: ${provinceData.gdp} 亿元<br>餐饮收入: ${provinceData.yoy} 亿元<br>占比: ${provinceData.ratio.toFixed(2)}%`)
+                .style("left", (event.pageX + 5) + "px")
+                .style("top", (event.pageY - 30) + "px");
+              d3.select(this).classed("province-hover", true);
+            }
+          })
+          .on("mouseout", function () {
+            tooltip.transition().duration(500).style("opacity", 0);
+            d3.select(this).classed("province-hover", false);
+          });
+
+
+        // 添加颜色图例
+        const legendWidth = 300;
+        const legendHeight = 20;
+
+        const legend = svg.append("g")
+          .attr("transform", `translate(${width / 3}, 50)`); // 图例的位置
+
+        // 创建颜色渐变
+        const legendScale = d3.scaleLinear()
+          .domain([0, d3.max(data, d => d.ratio)])  // 最小值到最大值
+          .range([0, legendWidth]);  // 设置图例宽度
+
+        // 创建渐变的矩形条
+        legend.append("defs")
+          .append("linearGradient")
+          .attr("id", "gradient")
+          .attr("x1", "0%")
+          .attr("y1", "0%")
+          .attr("x2", "100%")
+          .attr("y2", "0%")
+          .selectAll("stop")
+          .data([
+            { offset: "0%", color: "#ffffe0" },  // 浅黄色
+            { offset: "100%", color: "#8B0000" } // 深红褐色
+          ])
+          .enter().append("stop")
+          .attr("offset", d => d.offset)
+          .attr("stop-color", d => d.color);
+
+        // 绘制渐变矩形
+        legend.append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", legendWidth)
+          .attr("height", legendHeight)
+          .style("fill", "url(#gradient)");
+
+        // 在图例的左侧和右侧添加文字
+        legend.append("text")
+          .attr("x", 0)
+          .attr("y", legendHeight + 15)
+          .style("text-anchor", "middle")
+          .text("占比：低");
+
+        legend.append("text")
+          .attr("x", legendWidth)
+          .attr("y", legendHeight + 15)
+          .style("text-anchor", "middle")
+          .text("占比：高");
+
+      });
+    }
+
+    // 初始化
+    setProjection();
+
+    // 防抖动函数
+    let resizeTimeout;
+    window.onresize = function () {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(setProjection, 100); // 延迟100ms执行setProjection函数
+    };
+  </script>
+
+  <div class="button-container">
+    <a href="词云.html">
+      <button id="switchBtn">词云一览</button>
+    </a>
+    <a href="柱状图.html">
+      <button id="switchBtn">柱状图一览</button>
+    </a>
+
+
+    <a href="折线.html">
+      <button id="switchBtn">NKUer花费</button>
+
+    </a>
+    <a href="散点图.html">
+      <button id="switchBtn">全国情况</button>
+
+    </a>
+    <a href="词云.html">
+      <button id="switchBtn">返回</button>
+    </a>
+
+    <!-- <button id="switchBtn" onclick="switchPage()">切换页面</button> -->
+  </div>
+</body>
+
+</html>

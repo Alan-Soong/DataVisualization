@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>带阴影的曲线图（给定数据）</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script> <!-- 引入 D3.js 库 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            font-weight: 1000;
+            /* 添加背景图 */
+            background-image: url('light.jpg');
+            /* 将 'your-background-image.jpg' 替换为实际的背景图路径 */
+            background-size: cover;
+            /* 让背景图覆盖整个屏幕 */
+            background-repeat: no-repeat;
+            /* 不重复背景图 */
+            background-position: center;
+            /* 背景图在中心位置 */
+            margin: 0; /* 去除默认的边距 */
+            min-height: 98vh; /* 确保body至少占据整个视口高度 */
+        }
+
+        body::before {
+            opacity: 0.1;
+        }
+
+        .chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* justify-content: center; */
+            /* 垂直居中 */
+            min-height: 84vh;
+            /* 确保容器至少占满视口高度 */
+        }
+
+        #toogle {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #toggle-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #toogle:hover {
+            background-color: #45a049;
+        }
+
+        #toggle-button:hover {
+            background-color: #45a049;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            shape-rendering: crispEdges;
+        }
+
+        .line {
+            fill: none;
+            /* stroke: steelblue; */
+            stroke-width: 1;
+        }
+
+        .area {
+            /* fill: lightsteelblue; */
+            stroke: none;
+            opacity: 0.2;
+        }
+
+        .x-axis-label {
+            font-size: 16px;
+            text-anchor: middle;
+        }
+
+        .y-axis-label {
+            font-size: 16px;
+            text-anchor: middle;
+        }
+
+        .tick line {
+            stroke: #000;
+            /* 刻度线的颜色 */
+            stroke-width: 1px;
+            /* 刻度线的宽度 */
+        }
+
+        /* 用于淡入页面的 CSS 动画 */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+        }
+
+        #chart-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* 垂直居中 */
+            align-items: center;
+            width: auto;
+            /* 容器宽度自适应内容 */
+            height: auto;
+            /* 容器高度自适应内容 */
+        }
+
+        #chart-title {
+            font-size: 42px;
+            font-weight: bold;
+            margin-top: 10px;
+            /* margin-bottom: 10px; 添加一些底部边距，使标题与图表之间有一定的间距 */
+        }
+
+        #tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid gray;
+            border-radius: 10px;
+            padding: 5px;
+            font-size: 16px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        #tooltip.show {
+            opacity: 1;
+        }
+
+        /* 响应式调整图表宽度 */
+        @media screen and (max-width: 600px) {
+            .chart {
+                width: 90%;
+            }
+
+            #chart-container {
+                padding: 10px;
+                /* 在小屏幕时给容器添加一些内边距，避免内容太挤 */
+            }
+
+            /* 调整图表的外边距，让图表在小屏幕下更合理地显示 */
+            #chart svg {
+                margin: 0;
+            }
+
+            /* 减小图表标题字体大小 */
+            #chart-title {
+                font-size: 28px;
+            }
+
+            /* 调整按钮样式 */
+            #toggle-button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            .axis text {
+                font-size: 10px;
+            }
+
+            .axis path,
+            .axis line {
+                stroke-width: 0.5px;
+                /* 减小坐标轴线条宽度 */
+            }
+
+            .x-axis-label,
+            .y-axis-label {
+                font-size: 12px;
+            }
+
+            .axis.x-axis.tick line {
+                display: none;
+                /* 在小屏幕下隐藏 x 轴刻度线，避免过于拥挤 */
+            }
+
+            .axis.y-axis.tick line {
+                display: none;
+                /* 隐藏 y 轴刻度线 */
+            }
+
+            .axis.x-axis.tick text {
+                transform: rotate(-45deg);
+                /* 旋转 x 轴刻度文字，节省横向空间 */
+            }
+
+            .axis.x-axis.tick:not(:first-child) text {
+                display: none;
+                /* 每隔一个 x 轴刻度文字隐藏，进一步节省空间 */
+            }
+
+            .data-point {
+                r: 3px;
+                /* 减小数据点圆形半径 */
+            }
+
+            #tooltip {
+                font-size: 12px;
+                padding: 3px;
+            }
+        }
+
+        @media screen and (min-width: 601px) and (max-width: 1000px) {
+            .chart {
+                width: 80%;
+            }
+
+            #chart-title {
+                font-size: 32px;
+            }
+
+            #toggle-button {
+                font-size: 15px;
+                padding: 9px 18px;
+            }
+
+            .axis text {
+                font-size: 12px;
+            }
+
+            .axis path,
+            .axis line {
+                stroke-width: 0.8px;
+            }
+
+            .x-axis-label,
+            .y-axis-label {
+                font-size: 14px;
+            }
+
+            .data-point {
+                r: 3.5px;
+            }
+
+            #tooltip {
+                font-size: 14px;
+                padding: 4px;
+            }
+        }
+
+        @media screen and (min-width: 1001px) {
+            .chart {
+                width: 60%;
+            }
+
+            #chart-title {
+                font-size: 42px;
+            }
+
+            #toggle-button {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+
+            .axis text {
+                font-size: 16px;
+            }
+
+            .axis path,
+            .axis line {
+                stroke-width: 1px;
+            }
+
+            .x-axis-label,
+            .y-axis-label {
+                font-size: 16px;
+            }
+
+            .data-point {
+                r: 4px;
+            }
+
+            #tooltip {
+                font-size: 16px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chart-container">
+        <div id="chart-title">个人花费与人数一览</div>
+        <div class="chart" id="chart"></div>
+        <div>
+            <button id="toggle-button">切换种类图表</button>
+            <a href="词云.html">
+                <button id="toogle">返回</button>
+            </a>
+        </div>
+
+
+    </div>
+
+
+    <script>
+
+        function createChart(data, options) {
+            const title = options.title || "选择面食的个人花销情况";
+            const xLabel = options.xLabel || "花费金额（单位：元）";
+            const yLabel = options.yLabel || "人数（单位：人）";
+            const lineColor = options.lineColor || "steelblue";
+            const areaColor = options.areaColor || "lightsteelblue";
+
+            const chartContainer = d3.select(options.selector || "#chart");
+            const containerWidth = chartContainer.node().getBoundingClientRect().width;
+            const containerHeight = chartContainer.node().getBoundingClientRect().height;
+
+            // 设置图表的宽度和高度
+            const margin = { top: 60, right: 50, bottom: 60, left: 50 };
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
+
+            const svg = d3.select(options.selector || "#chart")
+                .append("svg")
+                //.attr("width", width + margin.left + margin.right)
+                //.attr("height", height + margin.top + margin.bottom)
+                .attr("width", containerWidth)
+                .attr("height", containerHeight)
+                .append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 100)
+                .attr("text-anchor", "middle")
+                .style("font-size", "20px")
+                .style("font-weight", "bold")
+                .text(title);
+
+            const x = d3.scaleLinear()
+                .domain([d3.min(data, d => d.x), d3.max(data, d => d.x) + 2])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                //.domain([d3.min(data, d => d.y), Math.floor(d3.max(data, d => d.y) * 1.1)])
+                .domain([0, Math.floor(d3.max(data, d => d.y) + 2)])
+                .range([height, 0]);
+
+            const line = d3.line()
+                .x(d => x(d.x))
+                .y(d => y(d.y))
+                .curve(d3.curveCardinal)
+                //.curve(d3.curveLinear);
+                .curve(d3.curveCardinal.tension(0.75));
+
+            const area = d3.area()
+                .x(d => x(d.x))
+                .y0(height)
+                .y1(d => y(d.y))
+                .curve(d3.curveCardinal)
+                //.curve(d3.curveLinear);
+                .curve(d3.curveCardinal.tension(0.75));
+
+            // 添加裁剪路径
+            svg.append("clipPath")
+                .attr("id", "clip-path")
+                .append("rect")
+                .attr("width", 0)
+                .attr("height", height);
+
+            // 绘制阴影区域
+            svg.append("path")
+                .datum(data)
+                .attr("fill", options.areaColor || "lightsteelblue")
+                .attr("class", "area")
+                .attr("clip-path", "url(#clip-path)")
+                .attr("d", area);
+
+            // 绘制曲线
+            const curve = svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", options.lineColor || "steelblue")
+                .attr("stroke-width", 5)
+                .attr("class", "line")
+                .attr("clip-path", "url(#clip-path)")
+                .attr("d", line);
+
+            // 添加动画效果
+            svg.select("#clip-path rect")
+                .transition()
+                .duration(1500) // 动画持续时间（毫秒）
+                .ease(d3.easeLinear)
+                .attr("width", width);
+
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("id", "tooltip")
+                .style("position", "absolute")
+                .style("background-color", "white")
+                .style("border", "1px solid gray")
+                .style("padding", "5px")
+                .style("border-radius", "5px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .classed("fade", true);
+
+            svg.selectAll("circle.data-point")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("class", "data - point")
+                .attr("cx", d => x(d.x))
+                .attr("cy", d => y(d.y))
+                .attr("r", 4)
+                .style("fill", options.lineColor || "steelblue")
+                .style("opacity", 0.8)
+                .attr("clip-path", "url(#clip-path)")
+                .on("mouseover", function (event) {
+                    tooltip.style("opacity", 1);
+                    tooltip.style("display", "block");
+                })
+                .on("mousemove", function (event) {
+                    const [mouseX, mouseY] = d3.pointer(event);
+                    const xValue = x.invert(mouseX);
+                    const closestData = data.reduce((prev, curr) =>
+                        Math.abs(curr.x - xValue) < Math.abs(prev.x - xValue) ? curr : prev);
+                    tooltip.html(`花销: ${closestData.x} 人数: ${closestData.y}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 20) + "px");
+                })
+                .on("mouseout", function () {
+                    tooltip.style("opacity", 0);
+                });
+
+
+            const xAxis = d3.axisBottom(x).ticks(5);
+            const yAxis = d3.axisLeft(y).ticks(5);
+
+            //x轴
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(0, ${height})`)
+                .call(xAxis);
+            //y轴
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .attr("transform", "translate(0, 0)");
+
+            // 添加x轴和y轴的标签
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height + 50)
+                .attr("class", "x-axis-label")
+                .style("text-anchor", "middle")
+                .text(xLabel);
+
+            svg.append("text")
+                .attr("x", -350)
+                .attr("y", -30)
+                .attr("class", "y-axis-label")
+                .style("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .text(yLabel);
+        }
+
+        document.body.classList.add("fade-in");
+        window.onload = function () {
+            setTimeout(function () {
+                document.body.classList.add("show");  // 页面淡入
+            }, 100); // 设置延迟时间确保页面加载完成后动画生效
+        }
+    </script>
+
+    <script>
+        const data0 = [
+            //{ "x": 0, "y": 0 },
+            { "x": 0, "y": 3 },
+            { "x": 1, "y": 5 },
+            { "x": 2, "y": 3 },
+            { "x": 3, "y": 6 },
+            { "x": 4, "y": 11 },
+            { "x": 5, "y": 10 },
+            { "x": 6, "y": 16 },
+            { "x": 7, "y": 7 },
+            { "x": 8, "y": 3 },
+            { "x": 9, "y": 2 },
+            { "x": 10, "y": 4 },
+            { "x": 11, "y": 3 },
+            { "x": 12, "y": 4 },
+            { "x": 13, "y": 1 },
+            { "x": 14, "y": 0 },
+            { "x": 15, "y": 2 },
+            { "x": 16, "y": 2 },
+            { "x": 17, "y": 1 },
+            { "x": 18, "y": 6 },
+            { "x": 19, "y": 0 },
+            { "x": 20, "y": 0 },
+            { "x": 21, "y": 0 },
+            { "x": 22, "y": 0 },
+            { "x": 23, "y": 0 },
+            { "x": 24, "y": 0 },
+            { "x": 25, "y": 0 },
+            { "x": 26, "y": 1 },
+            { "x": 27, "y": 1 },
+            { "x": 28, "y": 0 },
+            //{ "x": 200, "y": 0 }
+        ];
+        const data0_title = "选择面食的个人花销情况";
+        const data0_title0 = "选择面食的个人花销情况(悬浮圆形查看具体值)";
+
+        const data1 = [
+            //{ "x": 0, "y": 0 },
+            { "x": 0, "y": 2 },
+            { "x": 48, "y": 1 },
+            { "x": 50, "y": 2 },
+            { "x": 60, "y": 2 },
+            { "x": 63, "y": 2 },
+            { "x": 67, "y": 1 },
+            { "x": 68, "y": 1 },
+            { "x": 69, "y": 1 },
+            { "x": 70, "y": 1 },
+            { "x": 71, "y": 1 },
+            { "x": 77, "y": 1 },
+            { "x": 79, "y": 2 },
+            { "x": 80, "y": 2 },
+            { "x": 81, "y": 3 },
+            { "x": 100, "y": 3 },
+            { "x": 101, "y": 3 },
+            { "x": 102, "y": 1 },
+            { "x": 104, "y": 1 },
+            { "x": 105, "y": 1 },
+            { "x": 118, "y": 1 },
+            { "x": 120, "y": 2 },
+            { "x": 151, "y": 1 },
+            { "x": 158, "y": 1 },
+
+            //add temp viaration;
+            { "x": 200, "y": 3 },
+            { "x": 200, "y": 0 }
+
+        ]
+        const data1_title = "选择炒菜的个人花销情况";
+        const data1_title1 = "选择炒菜的个人花销情况(悬浮圆形查看具体值)";
+
+        const data2 = [
+            //{ "x": -1, "y": 0 },
+            { "x": 0, "y": 1 },
+            { "x": 40, "y": 1 },
+            { "x": 44, "y": 1 },
+            { "x": 49, "y": 1 },
+            { "x": 50, "y": 2 },
+            { "x": 57, "y": 1 },
+            { "x": 60, "y": 2 },
+            { "x": 63, "y": 1 },
+            { "x": 67, "y": 2 },
+            { "x": 69, "y": 2 },
+            { "x": 70, "y": 3 },
+            { "x": 71, "y": 2 },
+            { "x": 80, "y": 1 },
+            { "x": 98, "y": 1 },
+            { "x": 100, "y": 2 },
+            { "x": 104, "y": 1 },
+            { "x": 105, "y": 1 },
+            { "x": 107, "y": 1 },
+            { "x": 109, "y": 1 },
+            { "x": 149, "y": 1 },
+            { "x": 200, "y": 2 },
+            { "x": 200, "y": 0 },
+            // { "x": 500, "y": 2 },
+            // { "x": 501, "y": 0 }
+        ]
+        const data2_title = "选择烧烤的个人花销情况";
+        const data2_title2 = "选择烧烤的个人花销情况(悬浮圆形查看具体值)";
+
+
+        const data3 = [
+            //{ "x": -1, "y": 0 },
+            { "x": 0, "y": 1 },
+            { "x": 25, "y": 1 },
+            { "x": 50, "y": 1 },
+            { "x": 59, "y": 1 },
+            { "x": 60, "y": 1 },
+            { "x": 65, "y": 1 },
+            { "x": 68, "y": 1 },
+            { "x": 69, "y": 1 },
+            { "x": 70, "y": 2 },
+            { "x": 71, "y": 1 },
+            { "x": 72, "y": 1 },
+            { "x": 73, "y": 1 },
+            { "x": 75, "y": 2 },
+            { "x": 79, "y": 2 },
+            { "x": 80, "y": 2 },
+            { "x": 82, "y": 1 },
+            { "x": 85, "y": 1 },
+            { "x": 88, "y": 1 },
+            { "x": 90, "y": 1 },
+            { "x": 91, "y": 2 },
+            { "x": 94, "y": 1 },
+            { "x": 95, "y": 1 },
+            { "x": 97, "y": 1 },
+            { "x": 98, "y": 2 },
+            { "x": 99, "y": 3 },
+            { "x": 100, "y": 3 },
+            { "x": 101, "y": 3 },
+            { "x": 102, "y": 3 },
+            { "x": 104, "y": 2 },
+            { "x": 105, "y": 1 },
+            { "x": 108, "y": 1 },
+            { "x": 109, "y": 2 },
+            { "x": 110, "y": 2 },
+            { "x": 115, "y": 1 },
+            { "x": 116, "y": 1 },
+            { "x": 130, "y": 1 },
+            { "x": 135, "y": 1 },
+            { "x": 148, "y": 1 },
+            { "x": 150, "y": 1 },
+            { "x": 152, "y": 1 },
+            { "x": 153, "y": 1 },
+            { "x": 161, "y": 1 },
+            { "x": 195, "y": 1 },
+            { "x": 197, "y": 2 },
+
+            { "x": 200, "y": 5 },
+            { "x": 200, "y": 0 },
+
+            // { "x": 201, "y": 1 },
+            // { "x": 203, "y": 1 },
+            // { "x": 206, "y": 1 },
+            // { "x": 285, "y": 1 },
+            // { "x": 398, "y": 1 },
+            // { "x": 500, "y": 2 },
+            // { "x": 501, "y": 0 }
+        ]
+        const data3_title = "选择火锅的个人花销情况";
+        const data3_title3 = "选择火锅的个人花销情况(悬浮圆形查看具体值)";
+
+        const data4 = [
+            //{ "x": -1, "y": 0 },
+            { "x": 0, "y": 1 },
+            { "x": 35, "y": 1 },
+            { "x": 49, "y": 1 },
+            { "x": 51, "y": 1 },
+            { "x": 60, "y": 2 },
+            { "x": 65, "y": 1 },
+            { "x": 70, "y": 1 },
+            { "x": 75, "y": 1 },
+            { "x": 77, "y": 1 },
+            { "x": 80, "y": 2 },
+            { "x": 81, "y": 1 },
+            { "x": 94, "y": 1 },
+            { "x": 96, "y": 1 },
+            { "x": 98, "y": 1 },
+            { "x": 100, "y": 1 },
+            { "x": 102, "y": 1 },
+            { "x": 114, "y": 1 },
+            { "x": 116, "y": 1 },
+            { "x": 145, "y": 1 },
+            { "x": 150, "y": 1 },
+            { "x": 182, "y": 1 },
+            { "x": 200, "y": 2 },
+            { "x": 200, "y": 0 },
+            // { "x": 220, "y": 1 },
+            // { "x": 500, "y": 1 },
+            // { "x": 501, "y": 0 }
+        ]
+        const data4_title = "选择西餐的个人花销情况";
+        const data4_title4 = "选择西餐的个人花销情况(悬浮圆形查看具体值)";
+
+        const data5 = [
+            //{ "x": -1, "y": 0 },
+            { "x": 0, "y": 4 },
+            { "x": 12, "y": 1 },
+            { "x": 20, "y": 5 },
+            { "x": 24, "y": 2 },
+            { "x": 25, "y": 2 },
+            { "x": 26, "y": 1 },
+            { "x": 27, "y": 1 },
+            { "x": 28, "y": 2 },
+            { "x": 30, "y": 4 },
+            { "x": 31, "y": 1 },
+            { "x": 33, "y": 1 },
+            { "x": 35, "y": 1 },
+            { "x": 40, "y": 1 },
+            { "x": 41, "y": 1 },
+            { "x": 42, "y": 1 },
+            { "x": 50, "y": 2 },
+            { "x": 56, "y": 1 },
+            { "x": 62, "y": 1 },
+            { "x": 65, "y": 1 },
+            { "x": 70, "y": 1 },
+            { "x": 81, "y": 1 },
+            { "x": 94, "y": 1 },
+            { "x": 98, "y": 1 },
+            { "x": 99, "y": 1 },
+            { "x": 100, "y": 1 },
+            { "x": 100, "y": 0 }
+        ]
+        const data5_title = "选择小吃的个人花销情况";
+        const data5_title5 = "选择小吃的个人花销情况(悬浮圆形查看具体值)";
+
+
+        const dataSets = [
+            {
+                dat: data0,
+                title: data0_title,
+                titlee: data0_title0,
+                lineColor: "steelblue",
+                areaColor: "lightsteelblue"
+            },
+            {
+                dat: data1,
+                title: data1_title,
+                titlee: data1_title1,
+                //lineColor: "orange",
+                //areaColor: "lightyellow"
+                lineColor: "#ff7f0e",  // 橙色系，比较亮眼但不过分刺眼
+                areaColor: "#ffbb78"  // 较浅的橙色，作为区域颜色，与线条颜色搭配协调
+            },
+            {
+                dat: data2,
+                title: data2_title,
+                titlee: data2_title2,
+                //lineColor: "green",
+                //areaColor: "lightgreen"
+                lineColor: "#2ca02c",  // 绿色，清晰可辨
+                areaColor: "#98df8a"  // 较浅的绿色，用于填充区域，符合深浅搭配要求
+            },
+            {
+                dat: data3,
+                title: data3_title,
+                titlee: data3_title3,
+                //lineColor: "olive",
+                //areaColor: "lightsalmon"
+                lineColor: "#e377c2", // 更换为偏粉色系，比较柔和且有辨识度
+                areaColor: "#f7b6d2" // 对应的较浅粉色，用于区域填充，符合深浅要求
+            },
+            {
+                dat: data4,
+                title: data4_title,
+                titlee: data4_title4,
+                //lineColor: "cyan",
+                //areaColor: "lightcyan"
+                lineColor: "#8c564b", // 更换为偏棕褐色，有较好辨识度
+                areaColor: "#d6bcc0" // 对应的较浅颜色，用于区域填充
+            },
+            {
+                dat: data5,
+                title: data5_title,
+                titlee: data5_title5,
+                //lineColor: "skyblue",
+                //areaColor: "lightgray"
+                lineColor: "#9467bd",  // 紫色系，视觉上有区分度
+                areaColor: "#cbc9e2"  // 较浅的紫色，用于对应区域
+            },
+        ];
+
+
+
+    </script>
+
+    <script>
+        // 当前显示的数据组索引
+        let currentIndex = -1;
+
+        function updateChart() {
+            d3.select("#chart svg").remove(); // 移除旧图表
+            if (currentIndex !== -1) {
+                const currentData = dataSets[currentIndex % dataSets.length];
+
+                d3.select("#chart svg").remove(); // 移除旧图表
+
+                createChart(currentData.dat, {
+                    selector: "#chart",
+                    title: currentData.titlee,
+                    xLabel: currentData.xLabel,
+                    yLabel: currentData.yLabel,
+                    lineColor: currentData.lineColor,
+                    areaColor: currentData.areaColor,
+                });
+            }
+            else {
+                const chartContainer = d3.select("#chart");
+                const containerWidth = chartContainer.node().getBoundingClientRect().width;
+                const containerHeight = chartContainer.node().getBoundingClientRect().height;
+
+                // 设置图表的宽度和高度
+                const margin = { top: 60, right: 50, bottom: 60, left: 50 };
+                const width = containerWidth - margin.left - margin.right;
+                const height = containerHeight - margin.top - margin.bottom;
+
+                // 获取所有数据集的 X 轴的范围
+                const xMin = d3.min(dataSets, dataSet => d3.min(dataSet.dat, d => d.x));
+                const xMax = d3.max(dataSets, dataSet => d3.max(dataSet.dat, d => d.x));
+
+                // 创建共享的 X 和 Y 轴比例尺
+                const x = d3.scaleLinear()
+                    .domain([xMin, xMax])  // 使用所有数据集的 X 范围
+                    .range([0, width]);
+
+                const yMax = d3.max(dataSets, dataSet => d3.max(dataSet.dat, d => d.y));
+                const y = d3.scaleLinear()
+                    .domain([0, yMax])
+                    .range([height, 0]);
+
+                const svg = d3.select("#chart")
+                    .append("svg")
+                    .attr("width", containerWidth)
+                    .attr("height", containerHeight)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+
+                // 遍历所有数据集并绘制它们的线条和区域
+                dataSets.forEach((dataSet, index) => {
+                    const lineColor = d3.schemeCategory10[index % 10];
+                    // const areaColor = lineColor;
+
+                    //const lineColor = "lightsteelblue";
+                    const areaColor = "lightsteelblue";
+
+                    // 创建曲线
+                    const line = d3.line()
+                        .x(d => x(d.x))
+                        .y(d => y(d.y))
+                        .curve(d3.curveCardinal.tension(0.75));
+
+                    // 创建区域
+                    const area = d3.area()
+                        .x(d => x(d.x))
+                        .y0(height)
+                        .y1(d => y(d.y))
+                        .curve(d3.curveCardinal.tension(0.75));
+
+                    // 绘制曲线
+                    svg.append("path")
+                        .datum(dataSet.dat)
+                        .attr("fill", "none")
+                        .attr("stroke", lineColor)
+                        //.attr("stroke-width", 50)
+                        .attr("class", "line")
+                        .attr("d", line);
+
+
+                    // 绘制区域
+                    svg.append("path")
+                        .datum(dataSet.dat)
+                        .attr("fill", areaColor)
+                        .attr("class", "area")
+                        .attr("d", area);
+
+                
+                    // 添加 X 轴
+                    const xAxis = d3.axisBottom(x).ticks(5);
+                    svg.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", `translate(0, ${height})`)
+                        .call(xAxis);
+
+                    // 添加 Y 轴
+                    const yAxis = d3.axisLeft(y).ticks(5);
+                    svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis);
+
+                    // 添加 X 和 Y 轴标签
+                    svg.append("text")
+                        .attr("x", width / 2)
+                        .attr("y", height + 50)
+                        .attr("class", "x-axis-label")
+                        .style("text-anchor", "middle")
+                        .text("花费金额（单位：元）");
+
+                    svg.append("text")
+                        .attr("x", -350)
+                        .attr("y", -30)
+                        .attr("class", "y-axis-label")
+                        .style("text-anchor", "middle")
+                        .attr("transform", "rotate(-90)")
+                        .text("人数（单位：人）");
+
+                    svg.append("text")
+                        .attr("x", width / 2)
+                        .attr("y", 100)
+                        .attr("text-anchor", "middle")
+                        .style("font-size", "20px")
+                        .style("font-weight", "bold")
+                        .text("个人花费与人数总体一览（重复区域表示密集程度）");
+                });
+                // 绘制图例
+                drawLegend(svg);
+            }
+
+        }
+
+        // 绘制图例的函数
+        function drawLegend(svg) {
+            const legendWidth = 200;
+            const legendHeight = 100;
+            //const legendPadding = 60;
+            const chartContainer = d3.select("#chart");
+            const containerWidth = chartContainer.node().getBoundingClientRect().width;
+            const containerHeight = chartContainer.node().getBoundingClientRect().height;
+
+            // 设置图表的宽度和高度
+            const margin = { top: 60, right: 50, bottom: 60, left: 50 };
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
+
+            // 选择图表下方添加一个图例容器
+            const legend = svg.append("g")
+                .attr("transform", `translate(${width / 1.5}, ${height / 4})`); // 图例位置
+
+            // 定义矩形的高度和宽度
+            const rectWidth = 20;
+            const rectHeight = 20;
+            const gap = 5; // 矩形和文本之间的间距
+
+            // 为每个数据集创建一个图例项
+            dataSets.forEach((dataSet, index) => {
+                const lineColor = d3.schemeCategory10[index % 10];
+
+                // 画矩形作为图例
+                const legendItem = legend.append("g")
+                    .attr("transform", `translate(0, ${index * (rectHeight + gap)})`);
+
+                // 绘制矩形
+                legendItem.append("rect")
+                    .attr("width", rectWidth)
+                    .attr("height", rectHeight)
+                    .attr("fill", lineColor);
+
+                // 画文本作为标签
+                legendItem.append("text")
+                    .attr("x", rectWidth + gap) // 确保文本与矩形之间有一定间距
+                    .attr("y", rectHeight / 2) // 垂直居中
+                    .style("font-size", "12px")
+                    .attr("dy", "0.35em") // 微调文字垂直居中
+                    .text(dataSet.title); // 使用数据集的标题作为标签
+            });
+        }
+
+        // 监听按钮点击事件
+        d3.select("#toggle-button").on("click", function () {
+            // 更新索引
+            currentIndex = (currentIndex + 1) % dataSets.length;
+
+            // 更新图表
+            updateChart();
+        });
+
+        // 全局变量记录窗口宽度，用于防抖优化（避免频繁触发更新）
+        let windowWidth = window.innerWidth;
+
+        function debounce(func, delay) {
+            let timer;
+            return function () {
+                if (window.innerWidth !== windowWidth) {
+                    windowWidth = window.innerWidth;
+                    clearTimeout(timer);
+                    timer = setTimeout(func, delay);
+                }
+            };
+        }
+
+        function updateChartOnResize() {
+            updateChart();
+        }
+        updateChart();
+        window.addEventListener('resize', debounce(updateChartOnResize, 200));
+
+    </script>
+
+
+</body>
+
+</html>

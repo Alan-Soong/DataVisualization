@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+  <title>Start Button to Show iframe and Play Music</title>
+  <style>
+    /* 用 flexbox 使按钮居中 */
+    body {
+      display: flex;
+      justify-content: center; /* 水平居中 */
+      align-items: center; /* 垂直居中 */
+      height: 100vh; /* 设置 body 高度为视口高度 */
+      margin: 0;
+      flex-direction: column; /* 如果有多个元素可以垂直排列 */
+      position: relative; /* 用于定位 iframe */
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("background.jpg"); /* 替换为实际的图片路径 */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center; /* 可根据需要设置图片位置 */
+      opacity: 0.2; /* 设置透明度，这里是20%透明，可按需修改取值范围是0 - 1 */
+      z-index: -1; /* 将伪元素置于页面内容下方 */
+    }
+
+    /* 初始状态下，iframe 隐藏 */
+    #myIframe {
+      display: none;
+      width: 100%; /* 使 iframe 宽度铺满 */
+      height: 100vh; /* 使 iframe 高度铺满 */
+      border: none; /* 去除 iframe 边框 */
+    }
+
+    /* 按钮样式 */
+    #startButton {
+      padding: 10px 20px;
+      font-size: 32px;
+      font-family: 'Pacifico', cursive;
+      font-weight: 300;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    #startButton:hover {
+      background-color: #45a049;
+    }
+
+    /* 标题样式 */
+    #first {
+      font-family: "Medium", cursive;
+      font-weight: 500;
+      font-size: 56px;
+      text-align: center; /* 水平居中 */
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <h1 id="first">中国地图与图表展示</h1>
+  </div>
+
+  <!-- 点击按钮显示 iframe 并播放音乐 -->
+  <button id="startButton" onclick="startFunction()">开始探索</button>
+
+  <!-- 初始隐藏的 iframe -->
+  <iframe id="myIframe" src="词云.html"></iframe>
+
+  <!-- 音乐播放器 -->
+  <audio id="backgroundMusic" src="才下舌尖.mp3" preload="auto" loop></audio>
+
+  <script>
+    function startFunction() {
+      var iframe = document.getElementById('myIframe');
+      var button = document.getElementById('startButton');
+      var music = document.getElementById('backgroundMusic');
+      var title = document.getElementById('first');
+
+      // 显示 iframe
+      iframe.style.display = 'block';
+
+      // 隐藏按钮
+      button.style.display = 'none';
+
+      // 播放音乐
+      music.play();
+
+      // 隐藏标题
+      title.style.display = 'none';
+    }
+  </script>
+</body>
+
+</html>
